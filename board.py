@@ -95,6 +95,11 @@ class state:
             if new_board.move_zero(direction):
                 self._neighbors.append(state(new_board, self, None))
 
+    def is_goal(self) -> bool:
+        if self.board.goal_test():
+            return True
+        return False
+
     @property
     def level(self) -> int:
         return self._level        
