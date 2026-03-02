@@ -1,3 +1,6 @@
+from functools import total_ordering
+
+
 class board_8_puzzle:
     def __init__(self, board: None|list[list[int]] = None):
         if board is not None:
@@ -65,6 +68,9 @@ class board_8_puzzle:
     def board_list(self) -> list[int]:
         return [cell for row in self.board for cell in row]
 
+    def copy(self):
+        return board_8_puzzle([row.copy() for row in self.board])
+
     def __str__(self):
         """
         prints:
@@ -74,6 +80,40 @@ class board_8_puzzle:
         """
         return "\n".join(" ".join(str(cell) for cell in row) for row in self.board)
     
+@total_ordering # to fill in the other comparison methods based on __lt__
+class state:
+    def __init__(self, board: board_8_puzzle, parent: None|state = None, cost: None|int = None):
+        self.board = board
+        self.parent = parent
+        self.cost = cost
+
+        self._level = 0 if parent is None else parent.level + 1
+    
+        self._neighbors = []
+        for direction in ["up", "down", "left", "right"]:
+            new_board = board.copy()
+            if new_board.move_zero(direction):
+                self._neighbors.append(state(new_board, self, None))
+
+    @property
+    def level(self) -> int:
+        return self._level        
+
+    @property
+    def neighbors(self) -> list[state]:
+        return self._neighbors
+    
+    # comparison for this class objects to be comparable for heap in priority queue
+    def __lt__(self, other):
+        """Defines the less-than comparison based on cost / level."""
+        if not isinstance(other, state):
+            raise TypeError("Comparison is only supported between state instances.")
+        
+        if self.cost is not None and other.cost is not None:
+            return self.cost < other.cost
+        else:
+            return self.level < other.level
+
 
 if __name__ == "__main__":
     board = board_8_puzzle()
