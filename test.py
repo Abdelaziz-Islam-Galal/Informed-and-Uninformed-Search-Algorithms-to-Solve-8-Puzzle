@@ -7,4 +7,4 @@ if __name__ == "__main__":
     print(board)
     solver = algorithms(board)
     result = solver.bfs()
-    print("Goal found:", result)
+    print("Goal found:\n", result)
