@@ -55,9 +55,9 @@ class priority_queue:
     def decrease_key(self, item: board_state):
         for index, current_item in enumerate(self.items):
             if current_item == item:
-                if item.cost < current_item.cost:
-                    self.items[index].cost = item.cost
-                    self.parent = item.parent
+                if item.cost_f < current_item.cost_f:
+                    self.items[index].cost_f = item.cost_f
+                    self.items[index].parent = item.parent
                     heapq.heapify(self.items)
                 return
         raise ValueError("Item not found in the priority queue")
