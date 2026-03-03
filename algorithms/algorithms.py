@@ -17,7 +17,7 @@ class algorithms:
             explored.add(state)
 
             if state.is_goal():
-                return start
+                return state.board
 
             for neighbor in state.neighbors:
                 if neighbor not in explored and neighbor not in frontier.items:
