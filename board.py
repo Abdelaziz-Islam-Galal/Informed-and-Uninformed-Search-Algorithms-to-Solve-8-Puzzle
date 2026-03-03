@@ -20,17 +20,18 @@ class board_8_puzzle:
         Returns True if the move was successful, False otherwise.
         """
         def swap(i1, j1, i2, j2):
+            # print(f"Swapping ({i1}, {j1}) with ({i2}, {j2})")
             self.board[i1][j1], self.board[i2][j2] = self.board[i2][j2], self.board[i1][j1]
             self._zero_position = (i2, j2)
 
         zero_i, zero_j = self.zero_position
-        if direction == "up" or direction == "w" and zero_i > 0:
+        if (direction == "up" or direction == "w") and zero_i > 0:
             swap(zero_i, zero_j, zero_i - 1, zero_j)
-        elif direction == "down" or direction == "s" and zero_i < 2:
+        elif (direction == "down" or direction == "s") and zero_i < 2:
             swap(zero_i, zero_j, zero_i + 1, zero_j)
-        elif direction == "left" or direction == "a" and zero_j > 0:
+        elif (direction == "left" or direction == "a") and zero_j > 0:
             swap(zero_i, zero_j, zero_i, zero_j - 1)
-        elif direction == "right" or direction == "d" and zero_j < 2:
+        elif (direction == "right" or direction == "d") and zero_j < 2:
             swap(zero_i, zero_j, zero_i, zero_j + 1)
         else:
             return False
