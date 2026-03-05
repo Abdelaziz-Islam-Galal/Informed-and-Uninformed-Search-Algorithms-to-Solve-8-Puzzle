@@ -42,6 +42,15 @@ class board_state:
     def eucledian_heuristic_quantity(self) -> int:
         pass
 
+    def get_path(self) -> list['board_state']:
+        """Traces back from goal to start via parent pointers."""
+        path = []
+        current = self
+        while current is not None:
+            path.append(current)
+            current = current.parent
+        return list(reversed(path))
+
     def is_goal(self) -> bool:
         return self.board.goal_test()
 

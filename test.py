@@ -6,5 +6,13 @@ if __name__ == "__main__":
     board.shuffle(50)
     print(board)
     solver = algorithms(board)
-    result = solver.bfs()
-    print("Goal found:\n", result)
+
+    path = solver.bfs()
+    if path:
+        print(f"Solved in {len(path) - 1} moves:\n") # type: ignore
+        for step, state in enumerate(path): # type: ignore
+            print(f"Step {step}:")
+            print(state.board)   # uses your __str__
+            print()
+    else:
+        print("No solution found.")

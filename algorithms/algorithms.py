@@ -6,7 +6,7 @@ class algorithms:
     def __init__(self, puzzle: board_8_puzzle):
         self._puzzle = puzzle
         
-    def bfs(self) -> bool|board_8_puzzle:
+    def bfs(self) -> list[board_state]|bool:
         start = board_state(self._puzzle, None, False)
         explored = set()
         frontier = queue()
@@ -17,7 +17,7 @@ class algorithms:
             explored.add(state)
 
             if state.is_goal():
-                return state.board
+                return state.get_path()
 
             for neighbor in state.neighbors:
                 if neighbor not in explored and neighbor not in frontier.items:
