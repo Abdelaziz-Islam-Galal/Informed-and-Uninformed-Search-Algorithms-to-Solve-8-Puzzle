@@ -4,9 +4,6 @@ from collections import defaultdict
 
 from visualizer.implement_visualizer.adapter import tree_data
 
-LEVEL_HEIGHT = 1.4
-LEAF_SPACING = 1.1
-
 """
 - add heuristics if given
 - red for path
@@ -19,39 +16,11 @@ class tree_visualizer:
     CELL = 0.22          # size of one puzzle cell in figure units
     GRID = 3 * CELL      # full grid width/height
     HALF = GRID / 2
-
-    def __init__(self, level_height=1.4, leaf_spacing=1.1):
-        self._level_height = level_height
-        self._leaf_spacing = leaf_spacing
-
-    @property
-    def level_height(self) -> float:
-        return self._level_height
-
-    @level_height.setter
-    def level_height(self, value:float|None):
-        if value is None:
-            self._level_height = LEVEL_HEIGHT
-            return
-        if value <= 0:
-            raise ValueError("level_height must be positive.")
-        self._level_height:float = value
-
-    @property
-    def leaf_spacing(self) -> float:
-        return self._leaf_spacing
-
-    @leaf_spacing.setter
-    def leaf_spacing(self, value:float|None):
-        if value is None:
-            self._leaf_spacing = LEAF_SPACING
-            return
-        if value <= 0:
-            raise ValueError("leaf_spacing must be positive.")
-        self._leaf_spacing:float = value
+    LEVEL_HEIGHT = 1.4
+    LEAF_SPACING = 1.1        
 
     class tree_layout:
-        def __init__(self, tree: tree_data, level_height:float|None=LEVEL_HEIGHT, leaf_spacing:float|None=LEAF_SPACING):
+        def __init__(self, tree: tree_data, level_height:float, leaf_spacing:float):
             self.level_height:float|None = level_height
             self.leaf_spacing:float|None = leaf_spacing
 
@@ -171,7 +140,7 @@ class tree_visualizer:
 
     def render_tree(self, tree: tree_data, title="", out_file="tree.png"):
 
-        layout, (fig_w, fig_h) = self.tree_layout(tree, level_height=self.level_height, leaf_spacing=self.leaf_spacing).compute_layout()
+        layout, (fig_w, fig_h) = self.tree_layout(tree, level_height=self.LEVEL_HEIGHT, leaf_spacing=self.LEAF_SPACING).compute_layout()
         # compute_layout(tree, level_height=level_height, leaf_spacing=leaf_spacing)
 
         fig, ax = plt.subplots(figsize=(fig_w, fig_h))
