@@ -7,8 +7,10 @@ def test_bfs():
     print(board)
     solver = algorithms(board)
 
-    path = solver.bfs(False)
-    if path:
+    result: algorithms.result|None = solver.bfs(False)
+    if result:
+        path = result.goal_path
+        print(f"explored {len(result.explored)} states")
         print(f"Solved in {len(path) - 1} moves:\n") # type: ignore
         for step, state in enumerate(path): # type: ignore
             print(f"Step {step}:")
@@ -20,8 +22,9 @@ def test_bfs():
 def test_visuals():
     board = board_8_puzzle([[1,2,5], [3,4,0], [6,7,8]])
     solver = algorithms(board)
-    state_path = solver.bfs(True)
+    result: algorithms.result|None = solver.bfs(True)
 
 if __name__ == "__main__":
-    test_visuals()
+    test_bfs()
+    # test_visuals()
 
