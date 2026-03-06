@@ -63,6 +63,10 @@ class board_state:
     @property
     def board_list(self):
         return self.board.board_list
+    
+    @property
+    def level(self):
+        return self.cost
 
     def is_goal(self) -> bool:
         return self.board.goal_test()
