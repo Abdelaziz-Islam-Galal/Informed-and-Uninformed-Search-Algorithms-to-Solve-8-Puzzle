@@ -29,7 +29,7 @@ class board_state:
         elif self._heuristics == "eucledian" or (self.parent and self.parent._heuristics == "eucledian"):
             self.cost_f = self.cost + self.eucledian_heuristic_quantity()
         else:
-            self.cost_f: int | None = self.cost
+            self.cost_f: int | None = None
 
     @property
     def neighbors(self) -> list[board_state]: # find neighbours only once
@@ -59,6 +59,10 @@ class board_state:
             path.append(current)
             current = current.parent
         return list(reversed(path))
+    
+    @property
+    def board_list(self):
+        return self.board.board_list
 
     def is_goal(self) -> bool:
         return self.board.goal_test()

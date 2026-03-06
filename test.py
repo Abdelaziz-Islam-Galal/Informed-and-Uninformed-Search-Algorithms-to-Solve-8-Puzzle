@@ -7,7 +7,7 @@ def test_bfs():
     print(board)
     solver = algorithms(board)
 
-    path = solver.bfs()
+    path = solver.bfs(False)
     if path:
         print(f"Solved in {len(path) - 1} moves:\n") # type: ignore
         for step, state in enumerate(path): # type: ignore
@@ -17,20 +17,10 @@ def test_bfs():
     else:
         print("No solution found.")
 
-# def test_visuals():
-#     from visualizer.draw_tree import draw_tree
-
-#     board = board_8_puzzle([[1,2,5], [3,4,0], [6,7,8]])
-#     solver = algorithms(board)
-#     state_path = solver.bfs()
-
-#     if state_path:
-#         drawer = draw_tree(state_path[-1])
-#         drawer.draw(title="BFS Search Tree", out_file="bfs_tree.png")
-#     else:
-#         print("No solution found.")
-
-# tou need to be based on the frontier and explored of the algorithm
+def test_visuals():
+    board = board_8_puzzle([[1,2,5], [3,4,0], [6,7,8]])
+    solver = algorithms(board)
+    state_path = solver.bfs(True)
 
 if __name__ == "__main__":
     test_visuals()

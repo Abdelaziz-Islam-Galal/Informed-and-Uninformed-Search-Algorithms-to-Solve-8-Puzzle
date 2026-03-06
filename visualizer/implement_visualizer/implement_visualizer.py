@@ -7,6 +7,14 @@ from visualizer.implement_visualizer.adapter import tree_data
 LEVEL_HEIGHT = 1.4
 LEAF_SPACING = 1.1
 
+"""
+- add heuristics if given
+- red for path
+- orange for frontier
+
+->needs a flag for the end tree?
+"""
+
 class tree_visualizer:
     CELL = 0.22          # size of one puzzle cell in figure units
     GRID = 3 * CELL      # full grid width/height
@@ -121,19 +129,20 @@ class tree_visualizer:
             return layout, (max(fig_w, 4), max(fig_h, 4)), children, depth, id_map
 
 
-    def draw_grid(self, ax, state, cx, cy, highlight=False):
+    def draw_grid(self, ax, state, cx, cy, red=False, orange=False):
         """
         Draw a 3x3 puzzle grid centred at (cx, cy).
-        highlight=True  → red outer border instead of black.
+        red=True  → red outer border instead of black.
+        orange=True → orange outer border instead of black.
         """
         x0 = cx - self.HALF # first cell's left edge
         y0 = cy - self.HALF # first cell's bottom edge
 
-        border_color = "red" if highlight else "black"
+        border_color = "red" if red else "orange" if orange else "black"
         ax.add_patch(patches.FancyBboxPatch(
             (x0, y0), self.GRID, self.GRID,
             boxstyle="round,pad=0.01",
-            linewidth=2.0 if highlight else 1.5,
+            linewidth=2.0 if red else 1.5,
             edgecolor=border_color, facecolor="white", zorder=2))
 
         for i in range(3):
@@ -193,12 +202,11 @@ class tree_visualizer:
         # draw grids on top
         for node in tree.nodes:
             cx, cy = layout[node.id]
-            self.draw_grid(ax, node.state, cx, cy, highlight=node.heuristic)
+            self.draw_grid(ax, node.state, cx, cy, red=False, orange=False) #*****************
 
         ax.set_title(title, fontsize=11, fontweight="bold", pad=8)
         plt.tight_layout()
         plt.savefig(out_file, dpi=150, bbox_inches="tight")
-        plt.show()
         print(f"Saved → {out_file}")
 
 if __name__ == "__main__":
