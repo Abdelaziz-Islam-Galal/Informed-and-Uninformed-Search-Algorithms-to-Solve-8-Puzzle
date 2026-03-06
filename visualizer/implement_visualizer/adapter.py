@@ -1,3 +1,5 @@
+from algorithms.state import board_state
+
 class tree_data_node:
     def __init__(self, id, state, parent_id, label, heuristic):
         self.id = id
@@ -15,4 +17,10 @@ class tree_data:
         self.nodes.append(node)
 
 class state_to_tree_adapter(tree_data):
-    pass
+    def __init__(self, state: board_state):
+        super().__init__([])
+        self._convert_state(state)
+
+    def _convert_state(self, state):
+        pass
+

@@ -2,12 +2,12 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from collections import defaultdict
 
-# from sys import path
-# path.append("..")  # add parent directory to import path
+from visualizer.implement_visualizer.adapter import tree_data
 
-from adapter import tree_data
+LEVEL_HEIGHT = 1.4
+LEAF_SPACING = 1.1
 
-class tree_drawer:
+class tree_visualizer:
     CELL = 0.22          # size of one puzzle cell in figure units
     GRID = 3 * CELL      # full grid width/height
     HALF = GRID / 2
@@ -17,29 +17,36 @@ class tree_drawer:
         self._leaf_spacing = leaf_spacing
 
     @property
-    def level_height(self):
+    def level_height(self) -> float:
         return self._level_height
 
     @level_height.setter
-    def level_height(self, value):
+    def level_height(self, value:float|None):
+        if value is None:
+            self._level_height = LEVEL_HEIGHT
+            return
         if value <= 0:
             raise ValueError("level_height must be positive.")
-        self._level_height = value
+        self._level_height:float = value
 
     @property
-    def leaf_spacing(self):
+    def leaf_spacing(self) -> float:
         return self._leaf_spacing
 
     @leaf_spacing.setter
-    def leaf_spacing(self, value):
+    def leaf_spacing(self, value:float|None):
+        if value is None:
+            self._leaf_spacing = LEAF_SPACING
+            return
         if value <= 0:
             raise ValueError("leaf_spacing must be positive.")
-        self._leaf_spacing = value
+        self._leaf_spacing:float = value
 
-    class _tree_layout:
-        def __init__(self, tree: tree_data, level_height=1.2, leaf_spacing=1.0):
-            self.level_height = level_height
-            self.leaf_spacing = leaf_spacing
+    class tree_layout:
+        def __init__(self, tree: tree_data, level_height:float|None=LEVEL_HEIGHT, leaf_spacing:float|None=LEAF_SPACING):
+            self.level_height:float|None = level_height
+            self.leaf_spacing:float|None = leaf_spacing
+
             self.tree = tree
 
         def _build_tree_meta(self):
@@ -89,7 +96,7 @@ class tree_drawer:
             children, depth, id_map = self._build_tree_meta()
 
             root_id = next(n.id for n in self.tree.nodes if n.parent_id is None)
-            x_pos = self._assign_x_positions(root_id, children, self.leaf_spacing)
+            x_pos = self._assign_x_positions(root_id, children, self.leaf_spacing) #type: ignore
 
             max_depth = max(depth.values())
             layout    = {}
@@ -114,7 +121,7 @@ class tree_drawer:
             return layout, (max(fig_w, 4), max(fig_h, 4)), children, depth, id_map
 
 
-    def _draw_grid(self, ax, state, cx, cy, highlight=False):
+    def draw_grid(self, ax, state, cx, cy, highlight=False):
         """
         Draw a 3x3 puzzle grid centred at (cx, cy).
         highlight=True  → red outer border instead of black.
@@ -147,7 +154,7 @@ class tree_drawer:
                             fontweight="bold", zorder=4)
 
 
-    def _draw_arrow(self, axes, x1, y1, x2, y2, label=""):
+    def draw_arrow(self, axes, x1, y1, x2, y2, label=""):
         """Arrow from (x1,y1) to (x2,y2) with a midpoint label."""
         axes.annotate("", xy=(x2, y2), xytext=(x1, y1), arrowprops=dict(arrowstyle="-|>", color="black", lw=1.0, mutation_scale=10))
         if label:
@@ -157,9 +164,9 @@ class tree_drawer:
             axes.text(mx, my, label, ha="center", va="center", fontsize=7.5,
                     bbox=dict(facecolor="white", edgecolor="none", pad=1))
 
-    def _render_tree(self, tree: tree_data, title="", out_file="tree.png"):
+    def render_tree(self, tree: tree_data, title="", out_file="tree.png"):
 
-        layout, (fig_w, fig_h), children, depth, id_map = self._tree_layout(tree, level_height=self.level_height, leaf_spacing=self.leaf_spacing).compute_layout()
+        layout, (fig_w, fig_h), children, depth, id_map = self.tree_layout(tree, level_height=self.level_height, leaf_spacing=self.leaf_spacing).compute_layout()
         # compute_layout(tree, level_height=level_height, leaf_spacing=leaf_spacing)
 
         fig, ax = plt.subplots(figsize=(fig_w, fig_h))
@@ -181,12 +188,12 @@ class tree_drawer:
             px, py = layout[node.parent_id]
             cx, cy = layout[node.id]
             # attach arrow to bottom of parent grid, top of child grid
-            self._draw_arrow(ax, px, py - self.HALF, cx, cy + self.HALF, label=node.label)
+            self.draw_arrow(ax, px, py - self.HALF, cx, cy + self.HALF, label=node.label)
 
         # draw grids on top
         for node in tree.nodes:
             cx, cy = layout[node.id]
-            self._draw_grid(ax, node.state, cx, cy, highlight=node.heuristic)
+            self.draw_grid(ax, node.state, cx, cy, highlight=node.heuristic)
 
         ax.set_title(title, fontsize=11, fontweight="bold", pad=8)
         plt.tight_layout()
@@ -205,5 +212,5 @@ if __name__ == "__main__":
         tree_data_node(4, [1,2,3,4,5,0,7,8], 2, "Move 6 up", False),
     ]
     tree = tree_data(nodes)
-    drawer = tree_drawer()
-    drawer._render_tree(tree=tree, title="Example Search Tree", out_file="example_tree.png")
+    drawer = tree_visualizer()
+    drawer.render_tree(tree=tree, title="Example Search Tree", out_file="example_tree.png")
