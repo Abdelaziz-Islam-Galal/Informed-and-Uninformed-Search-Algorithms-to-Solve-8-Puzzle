@@ -41,8 +41,3 @@ class state_to_tree_adapter(tree_data):
             state_id = hash(state)
             parent_id = hash(state.parent) if state.parent else None
             self.add_node(state_id, state.board_list, state.level, parent_id, heuristic=state.cost_f, colour="orange")
-
-"""
-I added colours to node but not using them yet
-I need to make sure if no folder output then create one
-"""

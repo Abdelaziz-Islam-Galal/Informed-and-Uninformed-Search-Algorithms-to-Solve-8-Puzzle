@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import os
 
 from algorithms.data_structures import queue, stack, priority_queue
 from board import board_8_puzzle
@@ -39,6 +40,7 @@ class algorithms:
 
     def bfs(self, visual_output:bool) -> algorithms.result:
         if visual_output:
+            os.makedirs("output", exist_ok=True)
             visualizer_input_list: list[tuple[set, set, str, str]] = []
 
         start_time = time()
