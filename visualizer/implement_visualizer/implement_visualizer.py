@@ -61,17 +61,13 @@ class tree_visualizer:
             """Return children map and depth map."""
             children = defaultdict(list)
             depth    = {}
-            id_map   = {n.id for n in self.tree.nodes}
 
             for node in self.tree.nodes:
-                if node.parent_id is None:
-                    depth[node.id] = 0
-                else:
-                    depth[node.id] = depth[node.parent_id] + 1
+                depth[node.id] = node.depth
                 if node.parent_id is not None:
                     children[node.parent_id].append(node.id)
 
-            return children, depth, id_map
+            return children, depth
 
 
         def _assign_x_positions(self, root_id, children, leaf_spacing=1.0):
@@ -101,7 +97,7 @@ class tree_visualizer:
             """
             Returns dict {node_id: (cx, cy)} and figure size (width, height).
             """
-            children, depth, id_map = self._build_tree_meta()
+            children, depth = self._build_tree_meta()
 
             root_id = next(n.id for n in self.tree.nodes if n.parent_id is None)
             x_pos = self._assign_x_positions(root_id, children, self.leaf_spacing) #type: ignore
@@ -126,7 +122,7 @@ class tree_visualizer:
             oy = min(all_y) - margin
             layout = {nid: (cx - ox, cy - oy) for nid, (cx, cy) in layout.items()}
 
-            return layout, (max(fig_w, 4), max(fig_h, 4)), children, depth, id_map
+            return layout, (max(fig_w, 4), max(fig_h, 4))
 
 
     def draw_grid(self, ax, state, cx, cy, red=False, orange=False):
@@ -147,7 +143,7 @@ class tree_visualizer:
 
         for i in range(3):
             for j in range(3):
-                val = state[i * 2 + j] # mapping i,j to 1D list index
+                val = state[i * 3 + j] # mapping i,j to 1D list index
                 rx  = x0 + j * self.CELL # cell's left edge
                 ry  = y0 + (2 - i) * self.CELL # cell's bottom edge (i=0 is top row)
 
@@ -175,7 +171,7 @@ class tree_visualizer:
 
     def render_tree(self, tree: tree_data, title="", out_file="tree.png"):
 
-        layout, (fig_w, fig_h), children, depth, id_map = self.tree_layout(tree, level_height=self.level_height, leaf_spacing=self.leaf_spacing).compute_layout()
+        layout, (fig_w, fig_h) = self.tree_layout(tree, level_height=self.level_height, leaf_spacing=self.leaf_spacing).compute_layout()
         # compute_layout(tree, level_height=level_height, leaf_spacing=leaf_spacing)
 
         fig, ax = plt.subplots(figsize=(fig_w, fig_h))
@@ -214,10 +210,10 @@ if __name__ == "__main__":
     from adapter import tree_data, tree_data_node
 
     nodes = [
-        tree_data_node(1, [1,2,3,4,5,6,7,8,0], None, "Start", False),
-        tree_data_node(2, [1,2,3,4,5,6,7,0,8], 1, "Move 8 left", False),
-        tree_data_node(3, [1,2,3,4,5,6,0,7,8], 1, "Move 7 up", True),
-        tree_data_node(4, [1,2,3,4,5,0,7,8], 2, "Move 6 up", False),
+        tree_data_node(1, [1,2,3,4,5,6,7,8,0], 1, None, "Start", False),
+        tree_data_node(2, [1,2,3,4,5,6,7,0,8], 2, 1, "Move 8 left", False),
+        tree_data_node(3, [1,2,3,4,5,6,0,7,8], 2, 1, "Move 7 up", True),
+        tree_data_node(4, [1,2,3,4,5,0,7,8], 3, 2, "Move 6 up", False),
     ]
     tree = tree_data(nodes)
     drawer = tree_visualizer()

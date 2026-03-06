@@ -10,5 +10,5 @@ class tree_drawer:
         self.visualizer.level_height = level_height
         self.visualizer.leaf_spacing = leaf_spacing
         self.adapter = state_to_tree_adapter(explored, frontier, final_state)
-        self.visualizer.render_tree(self.adapter, title=title, out_file=out_file)
+        self.visualizer.render_tree(self.adapter, title=title, out_file=out_file) # type: ignore
 

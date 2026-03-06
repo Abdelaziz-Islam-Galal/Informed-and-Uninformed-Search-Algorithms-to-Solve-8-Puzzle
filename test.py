@@ -25,6 +25,6 @@ def test_visuals():
     result: algorithms.result|None = solver.bfs(True)
 
 if __name__ == "__main__":
-    test_bfs()
-    # test_visuals()
+    # test_bfs()
+    test_visuals()
 
