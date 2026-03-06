@@ -15,12 +15,21 @@ class board_state:
         self.cost = 0 if parent is None else parent.cost + 1 # cost = (level-1)
         self._neighbors: list[board_state] | None = None
 
-        if not Manhattan_heuristics and not eucledian_heuristics:
-            self.cost_f: int | None = self.cost 
-        elif Manhattan_heuristics:
-            self.cost_f = self.cost + self.manhattan_heuristic_quantity()
+        self._heuristics = None
+        if Manhattan_heuristics:
+            self._heuristics = "manhattan"
         elif eucledian_heuristics:
+            self._heuristics = "eucledian"
+
+        if Manhattan_heuristics and eucledian_heuristics:
+            raise ValueError("Cannot use both Manhattan and Eucledian heuristics at the same time.")
+
+        if self._heuristics == "manhattan" or (self.parent and self.parent._heuristics == "manhattan"):
+            self.cost_f = self.cost + self.manhattan_heuristic_quantity()
+        elif self._heuristics == "eucledian" or (self.parent and self.parent._heuristics == "eucledian"):
             self.cost_f = self.cost + self.eucledian_heuristic_quantity()
+        else:
+            self.cost_f: int | None = self.cost
 
     @property
     def neighbors(self) -> list[board_state]: # find neighbours only once
