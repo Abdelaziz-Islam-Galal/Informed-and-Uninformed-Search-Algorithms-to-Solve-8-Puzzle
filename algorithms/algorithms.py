@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 import os
 
 from algorithms.data_structures import queue, stack, priority_queue
 from board import board_8_puzzle
 from algorithms.state import board_state
-from visualizer.tree_drawer import tree_drawer
 from time import time
 
 
@@ -65,7 +66,8 @@ class algorithms:
             if state.is_goal():
                 time_taken = time() - start_time
                 if visual_output:
-                    drawer = tree_drawer()
+                    from visualizer.tree_drawer import tree_drawer as _tree_drawer
+                    drawer = _tree_drawer()
                     for input in visualizer_input_list: # type: ignore
                         drawer.draw(input[0], input[1], None, title=input[2], out_file=input[3]) # type: ignore
                     drawer.draw(explored.copy(), search_frontier.copy(), state, f"step {counter} (start)", f"output/{counter}.png") # type: ignore
@@ -83,3 +85,72 @@ class algorithms:
 
         return self.result(explored, start, None, time() - start_time)
     
+    def A_star(self, visual_output: bool, heuristic: str = "manhattan") -> algorithms.result:
+        if visual_output:
+            os.makedirs("output", exist_ok=True)
+            visualizer_input_list: list[tuple[set, set, str, str]] = []
+            counter = 0
+
+        start_time = time()
+        heuristic_normalized = heuristic.strip().lower().replace("-", "").replace("_", "")
+        if heuristic_normalized in {"manhattan", "manhattandistance"}:
+            start = board_state(self._puzzle, None, Manhattan_heuristics=True)
+        elif heuristic_normalized in {"euclidean", "eucledian", "euclideandistance", "euclediandistance"}:
+            start = board_state(self._puzzle, None, eucledian_heuristics=True)
+        else:
+            raise ValueError("A_star heuristic must be 'manhattan' or 'euclidean'.")
+
+        explored: set[board_state] = set()
+        frontier = priority_queue()
+        frontier_view: set[board_state] = set()
+        best_g: dict[board_state, int] = {start: start.cost}
+
+        frontier.insert(start)
+        frontier_view.add(start)
+        if visual_output:
+            visualizer_input_list.append(
+                (explored.copy(), frontier_view.copy(), f"step {counter} (start)", f"output/{counter}.png")
+            )
+            counter += 1
+
+        while not frontier.is_empty():
+            state: board_state = frontier.pop()
+            frontier_view.discard(state)
+
+            best_known = best_g.get(state)
+            if best_known is None or state.cost != best_known:
+                continue
+
+            explored.add(state)
+
+            if state.is_goal():
+                time_taken = time() - start_time
+                if visual_output:
+                    from visualizer.tree_drawer import tree_drawer as _tree_drawer
+                    drawer = _tree_drawer()
+                    for input in visualizer_input_list:  # type: ignore
+                        drawer.draw(input[0], input[1], None, title=input[2], out_file=input[3])  # type: ignore
+                    drawer.draw(
+                        explored.copy(),
+                        frontier_view.copy(),
+                        state,
+                        title=f"step {counter} (goal)",
+                        out_file=f"output/{counter}.png",
+                    )  # type: ignore
+                return self.result(explored, start, state, time_taken)
+
+            for neighbor in state.neighbors:
+                tentative_g = neighbor.cost
+                prev_best = best_g.get(neighbor)
+                if prev_best is None or tentative_g < prev_best:
+                    best_g[neighbor] = tentative_g
+                    frontier.insert(neighbor)
+                    frontier_view.add(neighbor)
+
+            if visual_output:
+                visualizer_input_list.append(
+                    (explored.copy(), frontier_view.copy(), f"step {counter}", f"output/{counter}.png")
+                )  # type: ignore
+                counter += 1
+
+        return self.result(explored, start, None, time() - start_time)
