@@ -1,4 +1,8 @@
+from __future__ import annotations
+
 from functools import total_ordering
+import math
+
 from board import board_8_puzzle
 
 @total_ordering  # to fill in the other comparison methods based on __lt__
@@ -15,21 +19,23 @@ class board_state:
         self.cost = 0 if parent is None else parent.cost + 1 # cost = (level-1)
         self._neighbors: list[board_state] | None = None
 
-        self._heuristics = None
+        if Manhattan_heuristics and eucledian_heuristics:
+            raise ValueError("Cannot use both Manhattan and Eucledian heuristics at the same time.")
+
+        self._heuristics: str | None = None
         if Manhattan_heuristics:
             self._heuristics = "manhattan"
         elif eucledian_heuristics:
             self._heuristics = "eucledian"
+        elif parent is not None and parent._heuristics is not None:
+            self._heuristics = parent._heuristics
 
-        if Manhattan_heuristics and eucledian_heuristics:
-            raise ValueError("Cannot use both Manhattan and Eucledian heuristics at the same time.")
-
-        if self._heuristics == "manhattan" or (self.parent and self.parent._heuristics == "manhattan"):
-            self.cost_f = self.cost + self.manhattan_heuristic_quantity()
-        elif self._heuristics == "eucledian" or (self.parent and self.parent._heuristics == "eucledian"):
+        if self._heuristics == "manhattan":
+            self.cost_f: float | None = self.cost + self.manhattan_heuristic_quantity()
+        elif self._heuristics == "eucledian":
             self.cost_f = self.cost + self.eucledian_heuristic_quantity()
         else:
-            self.cost_f: int | None = None
+            self.cost_f = None
 
     @property
     def neighbors(self) -> list[board_state]: # find neighbours only once
@@ -46,10 +52,24 @@ class board_state:
         return self._neighbors
 
     def manhattan_heuristic_quantity(self) -> int:
-        pass
+        total = 0
+        for index, value in enumerate(self.board.board_list):
+            if value == 0:
+                continue
+            row, col = divmod(index, 3)
+            goal_row, goal_col = divmod(value, 3)
+            total += abs(row - goal_row) + abs(col - goal_col)
+        return total
 
-    def eucledian_heuristic_quantity(self) -> int:
-        pass
+    def eucledian_heuristic_quantity(self) -> float:
+        total = 0.0
+        for index, value in enumerate(self.board.board_list):
+            if value == 0:
+                continue
+            row, col = divmod(index, 3)
+            goal_row, goal_col = divmod(value, 3)
+            total += math.sqrt((row - goal_row) ** 2 + (col - goal_col) ** 2)
+        return total
 
     def get_path(self) -> list['board_state']:
         """Traces back from goal to start via parent pointers."""
