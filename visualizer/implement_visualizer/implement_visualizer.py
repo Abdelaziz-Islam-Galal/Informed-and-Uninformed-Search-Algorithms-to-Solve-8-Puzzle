@@ -125,7 +125,7 @@ class tree_visualizer:
             return layout, (max(fig_w, 4), max(fig_h, 4))
 
 
-    def draw_grid(self, ax, state, cx, cy, red=False, orange=False):
+    def draw_grid(self, ax, state, cx, cy, colour):
         """
         Draw a 3x3 puzzle grid centred at (cx, cy).
         red=True  → red outer border instead of black.
@@ -134,11 +134,11 @@ class tree_visualizer:
         x0 = cx - self.HALF # first cell's left edge
         y0 = cy - self.HALF # first cell's bottom edge
 
-        border_color = "red" if red else "orange" if orange else "black"
+        border_color = colour if colour is not None else "black"
         ax.add_patch(patches.FancyBboxPatch(
             (x0, y0), self.GRID, self.GRID,
             boxstyle="round,pad=0.01",
-            linewidth=2.0 if red else 1.5,
+            linewidth=2.0 if border_color == "red" else 1.5,
             edgecolor=border_color, facecolor="white", zorder=2))
 
         for i in range(3):
@@ -198,23 +198,9 @@ class tree_visualizer:
         # draw grids on top
         for node in tree.nodes:
             cx, cy = layout[node.id]
-            self.draw_grid(ax, node.state, cx, cy, red=False, orange=False) #*****************
+            self.draw_grid(ax, node.state, cx, cy, colour=node.colour)
 
         ax.set_title(title, fontsize=11, fontweight="bold", pad=8)
         plt.tight_layout()
         plt.savefig(out_file, dpi=150, bbox_inches="tight")
         print(f"Saved → {out_file}")
-
-if __name__ == "__main__":
-    # example usage
-    from adapter import tree_data, tree_data_node
-
-    nodes = [
-        tree_data_node(1, [1,2,3,4,5,6,7,8,0], 1, None, "Start", False),
-        tree_data_node(2, [1,2,3,4,5,6,7,0,8], 2, 1, "Move 8 left", False),
-        tree_data_node(3, [1,2,3,4,5,6,0,7,8], 2, 1, "Move 7 up", True),
-        tree_data_node(4, [1,2,3,4,5,0,7,8], 3, 2, "Move 6 up", False),
-    ]
-    tree = tree_data(nodes)
-    drawer = tree_visualizer()
-    drawer.render_tree(tree=tree, title="Example Search Tree", out_file="example_tree.png")

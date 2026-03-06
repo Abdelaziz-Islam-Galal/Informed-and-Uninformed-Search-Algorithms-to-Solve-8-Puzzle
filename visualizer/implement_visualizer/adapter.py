@@ -19,7 +19,7 @@ class tree_data:
         if heuristic is not None:
             label = f"{heuristic}"
 
-        node = tree_data_node(id, state, level, parent_id, label, heuristic, colour)
+        node = tree_data_node(id, state, level, parent_id, label, heuristic, "black" if colour is None else colour)
         self.nodes.append(node)
 
 class state_to_tree_adapter(tree_data):

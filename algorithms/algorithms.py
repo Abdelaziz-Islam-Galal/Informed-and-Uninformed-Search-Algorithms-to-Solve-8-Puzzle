@@ -38,6 +38,8 @@ class algorithms:
             search_frontier.remove(state)
 
             if state.is_goal():
+                if visual_output:
+                    visualizer.draw(explored, search_frontier, final_state=state, title=f"step {counter} (goal)", out_file=f"output/{counter}.png") # type: ignore
                 return algorithms.result(explored, search_frontier, start, state, state.get_path())
 
             for neighbor in state.neighbors:
