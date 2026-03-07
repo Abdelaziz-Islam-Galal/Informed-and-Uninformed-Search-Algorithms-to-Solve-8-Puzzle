@@ -85,7 +85,57 @@ class algorithms:
 
         return self.result(explored, start, None, time() - start_time)
 
+        def ids(self, visual_output: bool = False) -> algorithms.result:
+        start_time = time()
+        start_node = board_state(self._puzzle, None)
         
+        all_explored = set() # To track the total number of explored nodes across all limits
+        limit = 0 # Start from depth 0
+        
+        print("Starting IDS Search...")
+        
+        while True:
+            # === Start of the Depth-Limited Search (DLS) logic for the current limit ===
+            frontier = stack() 
+            frontier.push(start_node)
+            
+            explored_in_this_run = set()
+            frontier_set = {start_node}
+            goal_node = None
+
+            while not frontier.is_empty():
+                current = frontier.pop()
+                frontier_set.remove(current)
+                explored_in_this_run.add(current)
+
+                if current.is_goal():
+                    goal_node = current
+                    break # Solution found, break the inner search loop
+
+                # Only expand neighbors if we are within the current depth limit
+                if current.level < limit:
+                    for neighbor in reversed(current.neighbors):
+                        if neighbor not in explored_in_this_run and neighbor not in frontier_set:
+                            frontier.push(neighbor)
+                            frontier_set.add(neighbor)
+            # === End of DLS logic ===
+
+            # Accumulate explored nodes for the final report
+            all_explored.update(explored_in_this_run)
+            
+            # If a solution is found in this iteration, return the result
+            if goal_node:
+                return self.result(all_explored, start_node, goal_node, time() - start_time)
+            
+            # If not found, increase the depth limit and try again (Iterate)
+            limit += 1
+            
+            # Failsafe to prevent infinite loops in case of unsolvable boards
+            if limit > 1000: 
+                break
+                
+        # Return failure if the limit is exceeded without finding a goal
+        return self.result(all_explored, start_node, None, time() - start_time)
         def dfs(self, visual_output: bool) -> algorithms.result:
         if visual_output:
             os.makedirs("output", exist_ok=True)
