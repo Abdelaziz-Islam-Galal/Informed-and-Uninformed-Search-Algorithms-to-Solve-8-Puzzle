@@ -36,7 +36,8 @@ class algorithms:
             print(f"Search depth: {search_depth}\n")
             print("Path to solution:\n")
             for step, state in enumerate(goal_path):
-                print(f"Step {step}:\n{state.board}\n")
+                move_txt = "START" if step == 0 else (state.move or "")
+                print(f"Step {step} ({move_txt}):\n{state.board}\n")
 
 
     def bfs(self, visual_output:bool) -> algorithms.result:
@@ -85,9 +86,14 @@ class algorithms:
 
         return self.result(explored, start, None, time() - start_time)
     
-    def A_star(self, visual_output: bool, heuristic: str = "manhattan") -> algorithms.result:
+    def A_star(
+        self,
+        visual_output: bool,
+        heuristic: str = "manhattan",
+        output_dir: str = "output",
+    ) -> algorithms.result:
         if visual_output:
-            os.makedirs("output", exist_ok=True)
+            os.makedirs(output_dir, exist_ok=True)
             visualizer_input_list: list[tuple[set, set, str, str]] = []
             counter = 0
 
@@ -109,7 +115,12 @@ class algorithms:
         frontier_view.add(start)
         if visual_output:
             visualizer_input_list.append(
-                (explored.copy(), frontier_view.copy(), f"step {counter} (start)", f"output/{counter}.png")
+                (
+                    explored.copy(),
+                    frontier_view.copy(),
+                    f"step {counter} (start)",
+                    os.path.join(output_dir, f"{counter}.png"),
+                )
             )
             counter += 1
 
@@ -118,7 +129,7 @@ class algorithms:
             frontier_view.discard(state)
 
             best_known = best_g.get(state)
-            if best_known is None or state.cost != best_known:
+            if best_known is None or state.cost != best_known:#ADD MORE SECURITY TO CHECK THERE IS ONE NODE WITH OPTIMAL COST FOUND
                 continue
 
             explored.add(state)
@@ -135,22 +146,28 @@ class algorithms:
                         frontier_view.copy(),
                         state,
                         title=f"step {counter} (goal)",
-                        out_file=f"output/{counter}.png",
+                        out_file=os.path.join(output_dir, f"{counter}.png"),
                     )  # type: ignore
                 return self.result(explored, start, state, time_taken)
 
             for neighbor in state.neighbors:
                 tentative_g = neighbor.cost
                 prev_best = best_g.get(neighbor)
-                if prev_best is None or tentative_g < prev_best:
-                    best_g[neighbor] = tentative_g
-                    frontier.insert(neighbor)
+                if prev_best is None or tentative_g < prev_best:#node=NONE MEAN THAT WE DIDN'T ADD IT TO best_g YET SO IT DIDN'T HAVE VALUE
+                    best_g[neighbor] = tentative_g              #tentative_g < prev_best CHECK THAT WE WILL ADD THE OPTIMAL COST OF THE NODE 
+                    frontier.insert(neighbor)   #THE SORTING TECHNIC HER DEPEND ON __lt__ which depend on f=g+h in state.py 
                     frontier_view.add(neighbor)
 
             if visual_output:
                 visualizer_input_list.append(
-                    (explored.copy(), frontier_view.copy(), f"step {counter}", f"output/{counter}.png")
+                    (
+                        explored.copy(),
+                        frontier_view.copy(),
+                        f"step {counter}",
+                        os.path.join(output_dir, f"{counter}.png"),
+                    )
                 )  # type: ignore
                 counter += 1
 
         return self.result(explored, start, None, time() - start_time)
+   
