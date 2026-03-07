@@ -84,6 +84,106 @@ class algorithms:
                 counter += 1 # type: ignore
 
         return self.result(explored, start, None, time() - start_time)
+
+        def ids(self, visual_output: bool = False) -> algorithms.result:
+        start_time = time()
+        start_node = board_state(self._puzzle, None)
+        
+        all_explored = set() # To track the total number of explored nodes across all limits
+        limit = 0 # Start from depth 0
+        
+        print("Starting IDS Search...")
+        
+        while True:
+            # === Start of the Depth-Limited Search (DLS) logic for the current limit ===
+            frontier = stack() 
+            frontier.push(start_node)
+            
+            explored_in_this_run = set()
+            frontier_set = {start_node}
+            goal_node = None
+
+            while not frontier.is_empty():
+                current = frontier.pop()
+                frontier_set.remove(current)
+                explored_in_this_run.add(current)
+
+                if current.is_goal():
+                    goal_node = current
+                    break # Solution found, break the inner search loop
+
+                # Only expand neighbors if we are within the current depth limit
+                if current.level < limit:
+                    for neighbor in reversed(current.neighbors):
+                        if neighbor not in explored_in_this_run and neighbor not in frontier_set:
+                            frontier.push(neighbor)
+                            frontier_set.add(neighbor)
+            # === End of DLS logic ===
+
+            # Accumulate explored nodes for the final report
+            all_explored.update(explored_in_this_run)
+            
+            # If a solution is found in this iteration, return the result
+            if goal_node:
+                return self.result(all_explored, start_node, goal_node, time() - start_time)
+            
+            # If not found, increase the depth limit and try again (Iterate)
+            limit += 1
+            # Failsafe to prevent infinite loops in case of unsolvable boards
+            if limit > 1000: 
+                break
+       
+                
+        # Return failure if the limit is exceeded without finding a goal
+        return self.result(all_explored, start_node, None, time() - start_time)
+        def dfs(self, visual_output: bool) -> algorithms.result:
+        if visual_output:
+            os.makedirs("output", exist_ok=True)
+            visualizer_input_list: list[tuple[set, set, str, str]] = []
+            counter = 0
+
+        start_time = time()
+        start = board_state(self._puzzle, None, False)
+        
+        explored = set()
+        frontier = stack() 
+        search_frontier = set() 
+
+        frontier.push(start)
+        search_frontier.add(start)
+
+        if visual_output:
+            visualizer_input_list.append((explored.copy(), search_frontier.copy(), f"step {counter} (start)", f"output/{counter}.png")) # type: ignore
+            counter += 1
+
+        while not frontier.is_empty():
+         
+            state: board_state = frontier.pop()
+            search_frontier.remove(state)
+            explored.add(state)
+
+            if state.is_goal():
+                time_taken = time() - start_time
+                if visual_output:
+                    from visualizer.tree_drawer import tree_drawer as _tree_drawer
+                    drawer = _tree_drawer()
+                    for input_data in visualizer_input_list:
+                        drawer.draw(input_data[0], input_data[1], None, title=input_data[2], out_file=input_data[3])
+                    drawer.draw(explored.copy(), search_frontier.copy(), state, f"step {counter} (goal)", f"output/{counter}.png")
+                
+                return self.result(explored, start, state, time_taken)
+
+
+            for neighbor in reversed(state.neighbors):
+                if neighbor not in explored and neighbor not in search_frontier:
+                    frontier.push(neighbor)
+                    search_frontier.add(neighbor)
+
+            if visual_output:
+                visualizer_input_list.append((explored.copy(), search_frontier.copy(), f"step {counter}", f"output/{counter}.png")) # type: ignore
+                counter += 1
+
+        return self.result(explored, start, None, time() - start_time)
     
     def A_star(self, visual_output: bool, heuristic: str = "manhattan") -> algorithms.result:
         if visual_output:
