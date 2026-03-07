@@ -129,7 +129,9 @@ class algorithms:
             
             # If not found, increase the depth limit and try again (Iterate)
             limit += 1
-            
+            # Failsafe to prevent infinite loops in case of unsolvable boards
+            if limit > 1000: 
+                break
        
                 
         # Return failure if the limit is exceeded without finding a goal
