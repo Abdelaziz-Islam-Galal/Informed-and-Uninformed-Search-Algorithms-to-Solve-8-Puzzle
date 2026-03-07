@@ -13,6 +13,15 @@ class tree_data_node:
 class tree_data:
     def __init__(self, list_of_nodes: list[tree_data_node]):
         self.nodes = list_of_nodes
+        self._root_node = None
+
+    @property
+    def root_node(self):
+        return self._root_node
+
+    @root_node.setter
+    def root_node(self, root_node:tree_data_node):
+        self._root_node = root_node
 
     def add_node(self, id, state:list, level:int, parent_id, heuristic, colour=None):
         label = ""
@@ -32,12 +41,20 @@ class state_to_tree_adapter(tree_data):
             red_path = set(final_state.get_path())
         for state in explored:
             state_id = hash(state)
-            parent_id = hash(state.parent) if state.parent else None
+            if state.parent:
+                parent_id = hash(state.parent)
+            else:
+                parent_id = None
+                self.root_node = tree_data_node(state_id, state.board_list, state.level, parent_id, "", state.cost_f)
             if final_state and (state in red_path): #type: ignore
                 self.add_node(state_id, state.board_list, state.level, parent_id, heuristic=state.cost_f, colour="red")
             else:
                 self.add_node(state_id, state.board_list, state.level, parent_id, heuristic=state.cost_f)
         for state in frontier:
             state_id = hash(state)
-            parent_id = hash(state.parent) if state.parent else None
+            if state.parent:
+                parent_id = hash(state.parent)
+            else:
+                parent_id = None
+                self.root_node = tree_data_node(state_id, state.board_list, state.level, parent_id, "", state.cost_f)
             self.add_node(state_id, state.board_list, state.level, parent_id, heuristic=state.cost_f, colour="orange")
