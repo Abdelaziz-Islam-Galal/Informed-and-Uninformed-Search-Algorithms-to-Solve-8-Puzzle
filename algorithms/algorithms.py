@@ -84,6 +84,56 @@ class algorithms:
                 counter += 1 # type: ignore
 
         return self.result(explored, start, None, time() - start_time)
+
+        
+        def dfs(self, visual_output: bool) -> algorithms.result:
+        if visual_output:
+            os.makedirs("output", exist_ok=True)
+            visualizer_input_list: list[tuple[set, set, str, str]] = []
+            counter = 0
+
+        start_time = time()
+        start = board_state(self._puzzle, None, False)
+        
+        explored = set()
+        frontier = stack() 
+        search_frontier = set() 
+
+        frontier.push(start)
+        search_frontier.add(start)
+
+        if visual_output:
+            visualizer_input_list.append((explored.copy(), search_frontier.copy(), f"step {counter} (start)", f"output/{counter}.png")) # type: ignore
+            counter += 1
+
+        while not frontier.is_empty():
+         
+            state: board_state = frontier.pop()
+            search_frontier.remove(state)
+            explored.add(state)
+
+            if state.is_goal():
+                time_taken = time() - start_time
+                if visual_output:
+                    from visualizer.tree_drawer import tree_drawer as _tree_drawer
+                    drawer = _tree_drawer()
+                    for input_data in visualizer_input_list:
+                        drawer.draw(input_data[0], input_data[1], None, title=input_data[2], out_file=input_data[3])
+                    drawer.draw(explored.copy(), search_frontier.copy(), state, f"step {counter} (goal)", f"output/{counter}.png")
+                
+                return self.result(explored, start, state, time_taken)
+
+
+            for neighbor in reversed(state.neighbors):
+                if neighbor not in explored and neighbor not in search_frontier:
+                    frontier.push(neighbor)
+                    search_frontier.add(neighbor)
+
+            if visual_output:
+                visualizer_input_list.append((explored.copy(), search_frontier.copy(), f"step {counter}", f"output/{counter}.png")) # type: ignore
+                counter += 1
+
+        return self.result(explored, start, None, time() - start_time)
     
     def A_star(self, visual_output: bool, heuristic: str = "manhattan") -> algorithms.result:
         if visual_output:
