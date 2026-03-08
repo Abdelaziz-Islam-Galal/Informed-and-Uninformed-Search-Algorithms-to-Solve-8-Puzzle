@@ -1,5 +1,6 @@
 from board import board_8_puzzle
 from algorithms.algorithms import algorithms
+from algorithms.reporting import generate_full_report
 
 import os
 import random
@@ -158,22 +159,30 @@ def run_submission_visualization(*, output_root: str = "output", include_dfs: bo
         print("(Visualizer requires matplotlib in your active environment.)")
 
 
+def generate_report(
+    board: board_8_puzzle | None = None,
+    out_file: str = "report.pdf",
+) -> None:
+    """Run all 5 algorithms on *board* and produce a single combined PDF report.
+
+    Each call deletes the old report and generates a fresh one.
+    """
+    if board is None:
+        board = board_8_puzzle([row.copy() for row in SUBMISSION_INITIAL])
+
+    results: dict[str, algorithms.result] = {}
+    results["BFS"]            = run_bfs(board)
+    results["DFS"]            = run_dfs(board)
+    results["IDS"]            = run_ids(board)
+    results["A* Manhattan"]   = run_a_star_manhattan(board)
+    results["A* Euclidean"]   = run_a_star_euclidean(board)
+
+    generate_full_report(
+        results=results,
+        start_board=board,
+        out_file=out_file,
+    )
+
+
 if __name__ == "__main__":
-    run_submission_case()
-    # run_submission_visualization(output_root="output")
-    # run_random_case(shuffle_moves=25, seed=0)
-
-    # If you run any visual_output=True algorithms manually, clear output first
-    # so each run produces a clean set of PNGs.
-    _clear_output_dir("output")
-
-    board = board_8_puzzle([[1, 2, 5], [3, 4, 0], [6, 7, 8]])
-
-    #board = board_8_puzzle([[8, 7, 6], [5, 4, 3], [2, 1, 0]])
-    print(board)
-    solver = algorithms(board)
-    result = solver.bfs(True, output_dir="output/bfs")
-    result = solver.dfs(True, output_dir="output/dfs")
-    result = solver.ids(True, output_dir="output/ids")
-    result = solver.A_star(True, heuristic="manhattan", output_dir="output/a_star_manhattan")
-    result = solver.A_star(True, heuristic="euclidean", output_dir="output/a_star_euclidean")
+    generate_report()

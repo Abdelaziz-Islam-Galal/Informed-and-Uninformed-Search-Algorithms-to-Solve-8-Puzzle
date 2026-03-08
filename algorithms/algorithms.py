@@ -99,11 +99,11 @@ class algorithms:
                         os.path.join(output_dir, f"{counter}.png"), # type: ignore  # write under output_dir
                     )  # type: ignore
                 
-                return self.result(explored, start, state, time_taken, max_depth, algorithm="BFS")
+                return self.result(explored, start, state, time_taken, max_depth, algorithm="BFS", data_structure="FIFO Queue (collections.deque) + visited set")
 
             if limit_counter >= self.LIMIT_STATES:
                 print(f"Reached state limit of {self.LIMIT_STATES}. Terminating search.")
-                return self.result(explored, start, None, time() - start_time, max_depth, algorithm="BFS")
+                return self.result(explored, start, None, time() - start_time, max_depth, algorithm="BFS", data_structure="FIFO Queue (collections.deque) + visited set")
 
             for neighbor in state.neighbors:
                 if neighbor not in explored and neighbor not in search_frontier:
@@ -121,7 +121,7 @@ class algorithms:
                 )  #type: ignore
                 counter += 1 # type: ignore
 
-        return self.result(explored, start, None, time() - start_time, max_depth, algorithm="BFS")
+        return self.result(explored, start, None, time() - start_time, max_depth, algorithm="BFS", data_structure="FIFO Queue (collections.deque) + visited set")
 
 
     def ids(self, visual_output: bool, output_dir: str = "output") -> algorithms.result:
@@ -203,7 +203,7 @@ class algorithms:
                         f"step {counter}",  # type: ignore
                         os.path.join(output_dir, f"{counter}.png"),  # type: ignore
                     )
-                return self.result(all_explored, start_node, goal_node, time_taken, max_depth)
+                return self.result(all_explored, start_node, goal_node, time_taken, max_depth, algorithm="IDS", data_structure="LIFO Stack (Python list) + visited set (per iteration)")
 
             # If not found, increase the depth limit and try again (Iterate)
             limit += 1
@@ -211,7 +211,7 @@ class algorithms:
             if limit > 500: 
                 break
 
-        return self.result(all_explored, start_node, None, time() - start_time, max_depth)
+        return self.result(all_explored, start_node, None, time() - start_time, max_depth, algorithm="IDS", data_structure="LIFO Stack (Python list) + visited set (per iteration)")
             
     def dfs(self, visual_output: bool, output_dir: str = "output") -> algorithms.result:
         if visual_output:
@@ -259,11 +259,11 @@ class algorithms:
                         os.path.join(output_dir, f"{counter}.png"), # type: ignore  # write under output_dir
                     )
                 
-                return self.result(explored, start, state, time_taken, max_depth)
+                return self.result(explored, start, state, time_taken, max_depth, algorithm="DFS", data_structure="LIFO Stack (Python list) + visited set")
 
             if limit_counter >= self.LIMIT_STATES:
                 print(f"Reached state limit of {self.LIMIT_STATES}. Terminating search.")
-                return self.result(explored, start, None, time() - start_time, max_depth, algorithm="BFS")
+                return self.result(explored, start, None, time() - start_time, max_depth, algorithm="DFS", data_structure="LIFO Stack (Python list) + visited set")
 
 
             for neighbor in reversed(state.neighbors):
@@ -282,7 +282,7 @@ class algorithms:
                 )  # type: ignore
                 counter += 1 # type: ignore
 
-        return self.result(explored, start, None, time() - start_time, max_depth, algorithm="DFS")
+        return self.result(explored, start, None, time() - start_time, max_depth, algorithm="DFS", data_structure="LIFO Stack (Python list) + visited set")
 
     
     def A_star(self, visual_output: bool, heuristic: str = "manhattan", output_dir: str = "output") -> algorithms.result:
@@ -360,7 +360,7 @@ class algorithms:
 
             if limit_counter >= self.LIMIT_STATES:
                 print(f"Reached state limit of {self.LIMIT_STATES}. Terminating search.")
-                return self.result(explored, start, None, time() - start_time, max_depth, algorithm="BFS")
+                return self.result(explored, start, None, time() - start_time, max_depth, algorithm="A*", heuristic=heuristic_label, data_structure="Priority queue (min-heap via heapq) ordered by f=g+h + best_g dictionary")
 
             for neighbor in state.neighbors:
                 tentative_g = neighbor.cost
