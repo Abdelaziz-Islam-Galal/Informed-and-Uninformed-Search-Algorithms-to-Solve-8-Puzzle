@@ -240,7 +240,7 @@ def _build_astar_heuristic_comparison_txt(results: dict[str, object]) -> list[st
 
     def _cost(r):
         goal = getattr(r, "goal_state", None)
-        return goal.level if goal else "N/A"
+        return goal.cost if goal else "N/A"
 
     def _moves(r) -> str:
         goal = getattr(r, "goal_state", None)
@@ -290,7 +290,7 @@ def _build_txt(results, start_board, assumptions, extras) -> str:
         lines.append(f"  {info['full_name']}")
         lines.append("-" * 70)
         solved = res.goal_state is not None
-        cost = res.goal_state.level if res.goal_state else "N/A"
+        cost = res.goal_state.cost if res.goal_state else "N/A"
         lines.append(f"  Solved:          {'Yes' if solved else 'No'}")
         lines.append(f"  Expanded nodes:  {len(res.explored)}")
         lines.append(f"  Cost of path:    {cost}")
@@ -406,7 +406,7 @@ def _generate_pdf(results, start_board, out_file, assumptions, extras) -> None:
         for res in results.values():
             info = _get_algo_info(res.algorithm, res.heuristic)
             solved = res.goal_state is not None
-            cost = res.goal_state.level if res.goal_state else "\u2014"
+            cost = res.goal_state.cost if res.goal_state else "\u2014"
             rows.append([
                 info["full_name"],
                 "\u2713" if solved else "\u2717",
@@ -448,8 +448,8 @@ def _generate_pdf(results, start_board, out_file, assumptions, extras) -> None:
         if man is not None and euc is not None:
             man_exp = len(getattr(man, "explored", []))
             euc_exp = len(getattr(euc, "explored", []))
-            man_cost = getattr(getattr(man, "goal_state", None), "level", "N/A")
-            euc_cost = getattr(getattr(euc, "goal_state", None), "level", "N/A")
+            man_cost = getattr(getattr(man, "goal_state", None), "cost", "N/A")
+            euc_cost = getattr(getattr(euc, "goal_state", None), "cost", "N/A")
             note = (
                 "A* heuristics: Manhattan vs Euclidean.  "
                 f"Expanded: {man_exp} vs {euc_exp}.  Cost: {man_cost} vs {euc_cost}.\n"
@@ -482,7 +482,7 @@ def _generate_pdf(results, start_board, out_file, assumptions, extras) -> None:
 
             # Statistics block
             ds = res.data_structure or info["data_structure"]
-            cost = res.goal_state.level if res.goal_state else "N/A"
+            cost = res.goal_state.cost if res.goal_state else "N/A"
             status_txt = "SOLVED \u2713" if solved else "NOT SOLVED \u2717"
 
             stats = [

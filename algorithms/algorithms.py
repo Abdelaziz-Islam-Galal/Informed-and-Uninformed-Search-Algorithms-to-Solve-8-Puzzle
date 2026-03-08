@@ -69,7 +69,7 @@ class algorithms:
             self._clear_output_dir(output_dir)
             visualizer_input_list: list[tuple[set, set, str, str]] = []
 
-        max_depth = 0
+        max_depth = 1
         limit_counter = 0
         start_time = time()
         start = board_state(self._puzzle, None)

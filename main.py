@@ -17,7 +17,7 @@ A_MAN_DIR = os.path.join(OUTPUT_ROOT, "a_star_manhattan")
 A_EUC_DIR = os.path.join(OUTPUT_ROOT, "a_star_euclidean")
 
 SUBMISSION_INITIAL = [[1, 2, 5], [3, 4, 0], [6, 7, 8]]
-VISUALIZE = False
+VISUALIZE = True
 
 def _clear_output_dir(output_root: str = "output") -> None:
     """Delete output_root entirely so each run starts fresh.
@@ -48,7 +48,7 @@ def _print_result(name: str, result: algorithms.result) -> None:
     print(f"{name}:")
     print(f"  Solved: {result.goal_state is not None}")
     print(f"  Expanded nodes: {len(result.explored)}")
-    print(f"  Cost of path: {result.goal_state.level if result.goal_state else 'N/A'}")
+    print(f"  Cost of path: {result.goal_state.cost if result.goal_state else 'N/A'}")
     print(f"  Search depth: {result.max_depth}")
     print(f"  Moves (U/D/L/R): {_moves_string(result)}")
     print(f"  Time: {result.time_taken:.4f} sec")
@@ -61,7 +61,7 @@ def run_bfs(board: board_8_puzzle) -> algorithms.result:
 
 
 def run_dfs(board: board_8_puzzle) -> algorithms.result:
-    result = algorithms(board.copy()).dfs(VISUALIZE, DFS_DIR)
+    result = algorithms(board.copy()).dfs(False, DFS_DIR)
     _print_result("DFS", result)
     return result
 
@@ -158,7 +158,7 @@ def find_astar_heuristic_difference_example(
                 print("Board:")
                 print(board)
                 print(f"Expanded nodes: Manhattan={man_expanded}, Euclidean={euc_expanded}")
-                print(f"Cost of path:   Manhattan={man.goal_state.level}, Euclidean={euc.goal_state.level}")
+                print(f"Cost of path:   Manhattan={man.goal_state.cost}, Euclidean={euc.goal_state.cost}")
                 return board
 
     print("No difference found in the given search budget.")

@@ -89,7 +89,7 @@ class board_state:
     
     @property
     def level(self):
-        return self.cost
+        return (self.cost + 1)
 
     def is_goal(self) -> bool:
         return self.board.goal_test()
