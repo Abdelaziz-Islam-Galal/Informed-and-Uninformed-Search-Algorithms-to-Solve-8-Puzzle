@@ -51,16 +51,16 @@ class priority_queue:
             return heapq.heappop(self.items)
         raise IndexError("Pop from an empty priority queue")
     
-    # NOTE: needs to be revised when implementing A*
-    def decrease_key(self, item: board_state):
-        for index, current_item in enumerate(self.items):
-            if current_item == item:
-                if item.cost_f < current_item.cost_f:
-                    self.items[index].cost_f = item.cost_f
-                    self.items[index].parent = item.parent
-                    heapq.heapify(self.items)
-                return
-        raise ValueError("Item not found in the priority queue")
+    # # NOTE: needs to be revised when implementing A*
+    # def decrease_key(self, item: board_state):
+    #     for index, current_item in enumerate(self.items):
+    #         if current_item == item:
+    #             if item.cost_f < current_item.cost_f:
+    #                 self.items[index].cost_f = item.cost_f
+    #                 self.items[index].parent = item.parent
+    #                 heapq.heapify(self.items)
+    #             return
+    #     raise ValueError("Item not found in the priority queue")
 
     def is_empty(self):
         return len(self.items) == 0

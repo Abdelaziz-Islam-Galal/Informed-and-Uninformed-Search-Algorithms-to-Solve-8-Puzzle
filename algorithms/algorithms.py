@@ -10,7 +10,7 @@ from time import time
 from visualizer.tree_drawer import tree_drawer as _tree_drawer
 
 class algorithms:
-    LIMIT_STATES = 10000
+    LIMIT_STATES = 10000000
     
     def __init__(self, puzzle: board_8_puzzle):
         self._puzzle = puzzle
