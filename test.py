@@ -6,6 +6,7 @@ import os
 import random
 import shutil
 import stat
+import time
 
 
 OUTPUT_ROOT: str = "output"
@@ -113,6 +114,55 @@ def generate_report(board: board_8_puzzle | None = None, out_file: str = "report
         start_board=board,
         out_file=out_file,
     )
+
+
+def find_astar_heuristic_difference_example(
+    *,
+    shuffle_moves_options: list[int] | None = None,
+    seed_range: range = range(0, 300),
+    time_limit_seconds: float = 15.0,
+) -> board_8_puzzle | None:
+    """Find a solvable board where A* expands different nodes under the two heuristics.
+
+    Note: Manhattan and Euclidean are both admissible for the 8-puzzle. The point of this
+    function is to find a harder instance where Manhattan (usually more informed) leads
+    to fewer expansions than Euclidean.
+    """
+
+    if shuffle_moves_options is None:
+        shuffle_moves_options = [25, 30, 35, 40, 45, 50]
+
+    start_time = time.time()
+    for shuffle_moves in shuffle_moves_options:
+        for seed in seed_range:
+            if time.time() - start_time > time_limit_seconds:
+                print("Timed out without finding a difference example.")
+                return None
+
+            random.seed(seed)
+            board = board_8_puzzle()
+            board.shuffle(shuffle_moves)
+
+            man = algorithms(board.copy()).A_star(False, heuristic="manhattan")
+            euc = algorithms(board.copy()).A_star(False, heuristic="euclidean")
+
+            if man.goal_state is None or euc.goal_state is None:
+                continue
+
+            man_expanded = len(man.explored)
+            euc_expanded = len(euc.explored)
+
+            if man_expanded != euc_expanded:
+                print("FOUND example board")
+                print(f"shuffle_moves={shuffle_moves}, seed={seed}")
+                print("Board:")
+                print(board)
+                print(f"Expanded nodes: Manhattan={man_expanded}, Euclidean={euc_expanded}")
+                print(f"Cost of path:   Manhattan={man.goal_state.level}, Euclidean={euc.goal_state.level}")
+                return board
+
+    print("No difference found in the given search budget.")
+    return None
 
 
 if __name__ == "__main__":

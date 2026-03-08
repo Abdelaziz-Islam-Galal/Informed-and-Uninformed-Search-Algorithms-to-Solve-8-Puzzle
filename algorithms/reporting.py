@@ -250,6 +250,8 @@ def _build_txt(results, start_board, assumptions, extras) -> str:
                     lines.append("    " + " ".join(str(c) for c in row))
                 lines.append("")
 
+    lines.extend(_build_astar_heuristic_comparison_txt(results))
+
     lines.append("=" * 70)
     lines.append("ASSUMPTIONS")
     for a in assumptions:
@@ -377,6 +379,21 @@ def _generate_pdf(results, start_board, out_file, assumptions, extras) -> None:
                         color=_CLR_SUCCESS if rows[i][1] == "\u2713" else _CLR_FAIL,
                         fontweight="bold",
                     )
+
+        # Optional note under the table: A* heuristic comparison (Manhattan vs Euclidean)
+        man, euc = _find_astar_heuristic_results(results)
+        if man is not None and euc is not None:
+            man_exp = len(getattr(man, "explored", []))
+            euc_exp = len(getattr(euc, "explored", []))
+            man_cost = getattr(getattr(man, "goal_state", None), "level", "N/A")
+            euc_cost = getattr(getattr(euc, "goal_state", None), "level", "N/A")
+            note = (
+                "A* heuristics: Manhattan vs Euclidean.  "
+                f"Expanded: {man_exp} vs {euc_exp}.  Cost: {man_cost} vs {euc_cost}.\n"
+                "Admissibility: both are admissible (sum of per-tile distances, blank ignored).  "
+                "Manhattan dominates Euclidean (L1 \u2265 L2), so it is more informed and typically expands fewer nodes."
+            )
+            fig.text(0.05, 0.06, note, fontsize=9, color="#37474f", va="bottom", wrap=True)
 
         pdf.savefig(fig); plt.close(fig)
 
