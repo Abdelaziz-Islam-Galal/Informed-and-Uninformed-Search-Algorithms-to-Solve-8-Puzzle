@@ -12,6 +12,34 @@ from time import time
 class algorithms:
     def __init__(self, puzzle: board_8_puzzle):
         self._puzzle = puzzle
+
+    @property
+    def board(self) -> board_8_puzzle:
+        """Get the current start board.
+
+        Returns a copy so callers can inspect/print safely without mutating the
+        solver's internal board by accident.
+        """
+
+        return self._puzzle.copy()
+
+    @board.setter
+    def board(self, puzzle: board_8_puzzle) -> None:
+        """Replace the current start board used by bfs/dfs/ids/A*."""
+
+        if not isinstance(puzzle, board_8_puzzle):
+            raise TypeError("board must be a board_8_puzzle instance")
+        self._puzzle = puzzle
+
+    def set_board(self, puzzle: board_8_puzzle) -> None:
+        """Explicit setter alias (same as: solver.board = puzzle)."""
+
+        self.board = puzzle
+
+    def get_board(self) -> board_8_puzzle:
+        """Explicit getter alias (same as: solver.board)."""
+
+        return self.board
         
     @dataclass
     class result:
@@ -45,7 +73,7 @@ class algorithms:
             visualizer_input_list: list[tuple[set, set, str, str]] = []
 
         start_time = time()
-        start = board_state(self._puzzle, None, False)
+        start = board_state(self._puzzle, None)
         explored = set()
         frontier = queue()
         search_frontier = set() # for o(1) search instead of O(n) in the queue
@@ -85,7 +113,7 @@ class algorithms:
 
         return self.result(explored, start, None, time() - start_time)
 
-        def ids(self, visual_output: bool = False) -> algorithms.result:
+    def ids(self, visual_output: bool) -> algorithms.result:
         start_time = time()
         start_node = board_state(self._puzzle, None)
         
@@ -136,14 +164,14 @@ class algorithms:
                 
         # Return failure if the limit is exceeded without finding a goal
         return self.result(all_explored, start_node, None, time() - start_time)
-        def dfs(self, visual_output: bool) -> algorithms.result:
+    def dfs(self, visual_output: bool) -> algorithms.result:
         if visual_output:
             os.makedirs("output", exist_ok=True)
             visualizer_input_list: list[tuple[set, set, str, str]] = []
             counter = 0
 
         start_time = time()
-        start = board_state(self._puzzle, None, False)
+        start = board_state(self._puzzle, None)
         
         explored = set()
         frontier = stack() 
@@ -185,9 +213,14 @@ class algorithms:
 
         return self.result(explored, start, None, time() - start_time)
     
-    def A_star(self, visual_output: bool, heuristic: str = "manhattan") -> algorithms.result:
+    def A_star(
+        self,
+        visual_output: bool,
+        heuristic: str = "manhattan",
+        output_dir: str = "output",
+    ) -> algorithms.result:
         if visual_output:
-            os.makedirs("output", exist_ok=True)
+            os.makedirs(output_dir, exist_ok=True)
             visualizer_input_list: list[tuple[set, set, str, str]] = []
             counter = 0
 
@@ -209,7 +242,12 @@ class algorithms:
         frontier_view.add(start)
         if visual_output:
             visualizer_input_list.append(
-                (explored.copy(), frontier_view.copy(), f"step {counter} (start)", f"output/{counter}.png")
+                (
+                    explored.copy(),
+                    frontier_view.copy(),
+                    f"step {counter} (start)",
+                    os.path.join(output_dir, f"{counter}.png"),
+                )
             )
             counter += 1
 
@@ -235,7 +273,7 @@ class algorithms:
                         frontier_view.copy(),
                         state,
                         title=f"step {counter} (goal)",
-                        out_file=f"output/{counter}.png",
+                        out_file=os.path.join(output_dir, f"{counter}.png"),
                     )  # type: ignore
                 return self.result(explored, start, state, time_taken)
 
@@ -249,7 +287,12 @@ class algorithms:
 
             if visual_output:
                 visualizer_input_list.append(
-                    (explored.copy(), frontier_view.copy(), f"step {counter}", f"output/{counter}.png")
+                    (
+                        explored.copy(),
+                        frontier_view.copy(),
+                        f"step {counter}",
+                        os.path.join(output_dir, f"{counter}.png"),
+                    )
                 )  # type: ignore
                 counter += 1
 

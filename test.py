@@ -1,55 +1,93 @@
 from board import board_8_puzzle
 from algorithms.algorithms import algorithms
 
-def test_bfs():
-    board = board_8_puzzle([[1,2,5], [3,4,0], [6,7,8]])
-    # board.shuffle(50)
+import random
+
+
+SUBMISSION_INITIAL = [[1, 2, 5], [3, 4, 0], [6, 7, 8]]
+
+
+def _moves_string(result: algorithms.result) -> str:
+    if not result.goal_state:
+        return "N/A"
+    path = result.goal_state.get_path()
+    move_map = {"up": "U", "down": "D", "left": "L", "right": "R"}
+    moves = [move_map.get(s.move, s.move) for s in path[1:]]
+    return " ".join(m for m in moves if m)
+
+
+def _search_depth(result: algorithms.result) -> int:
+    return max((state.level for state in result.explored), default=0)
+
+
+def _print_result(name: str, result: algorithms.result) -> None:
+    print(f"{name}:")
+    print(f"  Solved: {result.goal_state is not None}")
+    print(f"  Expanded nodes: {len(result.explored)}")
+    print(f"  Cost of path: {result.goal_state.level if result.goal_state else 'N/A'}")
+    print(f"  Search depth: {_search_depth(result)}")
+    print(f"  Moves (U/D/L/R): {_moves_string(result)}")
+    print(f"  Time: {result.time_taken:.4f} sec")
+
+
+def run_bfs(board: board_8_puzzle) -> algorithms.result:
+    result = algorithms(board.copy()).bfs(False)
+    _print_result("BFS", result)
+    return result
+
+
+def run_dfs(board: board_8_puzzle) -> algorithms.result:
+    result = algorithms(board.copy()).dfs(False)
+    _print_result("DFS", result)
+    return result
+
+
+def run_ids(board: board_8_puzzle) -> algorithms.result:
+    result = algorithms(board.copy()).ids(False)
+    _print_result("IDS", result)
+    return result
+
+
+def run_a_star_manhattan(board: board_8_puzzle) -> algorithms.result:
+    result = algorithms(board.copy()).A_star(False, heuristic="manhattan")
+    _print_result("A* (Manhattan)", result)
+    return result
+
+
+def run_a_star_euclidean(board: board_8_puzzle) -> algorithms.result:
+    result = algorithms(board.copy()).A_star(False, heuristic="euclidean")
+    _print_result("A* (Euclidean)", result)
+    return result
+
+
+def run_submission_case() -> None:
+    board = board_8_puzzle([row.copy() for row in SUBMISSION_INITIAL])
+    print("CASE 1: SUBMISSION (fixed)")
+    print("Start board:")
     print(board)
-    solver = algorithms(board)
+    print("-" * 60)
+    run_bfs(board)
+    run_dfs(board)
+    run_ids(board)
+    run_a_star_manhattan(board)
+    run_a_star_euclidean(board)
 
-    result: algorithms.result|None = solver.bfs(False)
-    result.save_report("report.txt")
 
-def test_visuals():
-    board = board_8_puzzle([[1,2,5], [3,4,0], [6,7,8]])
-    solver = algorithms(board)
-    result: algorithms.result|None = solver.bfs(True)
-    if result:
-        result.save_report("output/report.txt")
+def run_random_case(*, shuffle_moves: int = 25, seed: int = 0) -> None:
+    random.seed(seed)
+    board = board_8_puzzle()
+    board.shuffle(shuffle_moves)
 
-def test_a_star(visual: bool = False):
-    board = board_8_puzzle([[1, 2, 5], [3, 4, 0], [6, 7, 8]])
-    solver = algorithms(board)
-    result: algorithms.result|None = solver.A_star(visual, heuristic="manhattan")
-    if result:
-        result.save_report("report.txt")
+    print("CASE 2: RANDOM (shuffled)")
+    print(f"Shuffle moves: {shuffle_moves}, seed: {seed}")
+    print("Start board:")
+    print(board)
+    print("-" * 60)
+    # On harder boards BFS/DFS/IDS can be very slow, so default to A* only.
+    run_a_star_manhattan(board)
+    run_a_star_euclidean(board)
 
-def compare_a_star_heuristics():
-    board = board_8_puzzle([[1, 2, 5], [3, 4, 0], [6, 7, 8]])
-    solver = algorithms(board)
-
-    man = solver.A_star(False, heuristic="manhattan")
-    euc = solver.A_star(False, heuristic="euclidean")
-
-    print("A* Heuristic Comparison")
-    print("- Manhattan:")
-    print(f"  Expanded nodes: {len(man.explored)}")
-    print(f"  Cost of path: {man.goal_state.level if man.goal_state else 'N/A'}")
-    print(f"  Time: {man.time_taken:.4f} sec")
-    print("- Euclidean:")
-    print(f"  Expanded nodes: {len(euc.explored)}")
-    print(f"  Cost of path: {euc.goal_state.level if euc.goal_state else 'N/A'}")
-    print(f"  Time: {euc.time_taken:.4f} sec")
-
-    if man.goal_state and euc.goal_state:
-        if len(man.explored) < len(euc.explored):
-            print("Result: Manhattan expanded fewer nodes on this puzzle.")
-        elif len(man.explored) > len(euc.explored):
-            print("Result: Euclidean expanded fewer nodes on this puzzle.")
-        else:
-            print("Result: Both expanded the same number of nodes on this puzzle.")
 
 if __name__ == "__main__":
-    # test_bfs()
-    compare_a_star_heuristics()
-
+    run_submission_case()
+    run_random_case(shuffle_moves=25, seed=0)
