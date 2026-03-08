@@ -17,7 +17,7 @@ A_MAN_DIR = os.path.join(OUTPUT_ROOT, "a_star_manhattan")
 A_EUC_DIR = os.path.join(OUTPUT_ROOT, "a_star_euclidean")
 
 SUBMISSION_INITIAL = [[1, 2, 5], [3, 4, 0], [6, 7, 8]]
-VISUALIZE = False
+VISUALIZE = True
 
 def _clear_output_dir(output_root: str = "output") -> None:
     """Delete output_root entirely so each run starts fresh.
@@ -61,7 +61,7 @@ def run_bfs(board: board_8_puzzle) -> algorithms.result:
 
 
 def run_dfs(board: board_8_puzzle) -> algorithms.result:
-    result = algorithms(board.copy()).dfs(VISUALIZE, DFS_DIR)
+    result = algorithms(board.copy()).dfs(False, DFS_DIR)
     _print_result("DFS", result)
     return result
 

@@ -19,7 +19,7 @@ class board_state:
         self.parent = parent
         # The action taken from parent -> this state (e.g., 'up', 'down', 'left', 'right')
         self.move = move
-        self.cost = 0 if parent is None else parent.cost + 1 # cost = (level-1)
+        self.cost = 1 if parent is None else parent.cost + 1 # cost = (level-1)
         self._neighbors: list[board_state] | None = None
 
         if Manhattan_heuristics and eucledian_heuristics:
