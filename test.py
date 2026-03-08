@@ -1,7 +1,10 @@
 from board import board_8_puzzle
 from algorithms.algorithms import algorithms
+
 import os
 import random
+import shutil
+import stat
 
 
 def _save_report(result: algorithms.result, out_file: str) -> None:
@@ -14,9 +17,23 @@ def _save_report(result: algorithms.result, out_file: str) -> None:
             print(f"Falling back to text report: {fallback}")
             result.save_report(fallback)
 
-import random
-import os
-import shutil
+
+def _clear_output_dir(output_root: str = "output") -> None:
+    """Delete output_root entirely so each run starts fresh.
+
+    On Windows, some files may be marked read-only; onerror makes deletion robust.
+    """
+
+    def _onerror(func, path, exc_info):
+        try:
+            os.chmod(path, stat.S_IWRITE)
+            func(path)
+        except Exception:
+            raise
+
+    if os.path.isdir(output_root):
+        shutil.rmtree(output_root, onerror=_onerror)
+    os.makedirs(output_root, exist_ok=True)
 
 
 SUBMISSION_INITIAL = [[1, 2, 5], [3, 4, 0], [6, 7, 8]]
@@ -113,9 +130,7 @@ def run_submission_visualization(*, output_root: str = "output", include_dfs: bo
     """
 
     # Requirement: each run should replace the previous run output entirely.
-    if os.path.isdir(output_root):
-        shutil.rmtree(output_root)  # delete old PNGs/folders
-    os.makedirs(output_root, exist_ok=True)
+    _clear_output_dir(output_root)
 
     board = board_8_puzzle([row.copy() for row in SUBMISSION_INITIAL])
 
@@ -144,13 +159,17 @@ def run_submission_visualization(*, output_root: str = "output", include_dfs: bo
 
 
 if __name__ == "__main__":
-    # run_submission_case()
+    run_submission_case()
     # run_submission_visualization(output_root="output")
     # run_random_case(shuffle_moves=25, seed=0)
 
-    # board = board_8_puzzle([[3, 1, 2], [6, 4, 5], [0, 7, 8]])
+    # If you run any visual_output=True algorithms manually, clear output first
+    # so each run produces a clean set of PNGs.
+    _clear_output_dir("output")
 
-    board = board_8_puzzle([[8, 7, 6], [5, 4, 3], [2, 1, 0]])
+    board = board_8_puzzle([[1, 2, 5], [3, 4, 0], [6, 7, 8]])
+
+    #board = board_8_puzzle([[8, 7, 6], [5, 4, 3], [2, 1, 0]])
     print(board)
     solver = algorithms(board)
     result = solver.bfs(True, output_dir="output/bfs")
