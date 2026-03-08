@@ -12,34 +12,6 @@ from time import time
 class algorithms:
     def __init__(self, puzzle: board_8_puzzle):
         self._puzzle = puzzle
-
-    @property
-    def board(self) -> board_8_puzzle:
-        """Get the current start board.
-
-        Returns a copy so callers can inspect/print safely without mutating the
-        solver's internal board by accident.
-        """
-
-        return self._puzzle.copy()
-
-    @board.setter
-    def board(self, puzzle: board_8_puzzle) -> None:
-        """Replace the current start board used by bfs/dfs/ids/A*."""
-
-        if not isinstance(puzzle, board_8_puzzle):
-            raise TypeError("board must be a board_8_puzzle instance")
-        self._puzzle = puzzle
-
-    def set_board(self, puzzle: board_8_puzzle) -> None:
-        """Explicit setter alias (same as: solver.board = puzzle)."""
-
-        self.board = puzzle
-
-    def get_board(self) -> board_8_puzzle:
-        """Explicit getter alias (same as: solver.board)."""
-
-        return self.board
         
     @dataclass
     class result:
@@ -67,9 +39,11 @@ class algorithms:
                 print(f"Step {step}:\n{state.board}\n")
 
 
-    def bfs(self, visual_output:bool) -> algorithms.result:
+    def bfs(self, visual_output: bool, output_dir: str = "output") -> algorithms.result:
+        # output_dir added so visualization PNGs can be routed to a model-specific folder
+        # (e.g., output/bfs/) instead of always writing into the shared output/ directory.
         if visual_output:
-            os.makedirs("output", exist_ok=True)
+            os.makedirs(output_dir, exist_ok=True)  # ensure output_dir exists before writing PNGs
             visualizer_input_list: list[tuple[set, set, str, str]] = []
 
         start_time = time()
@@ -83,7 +57,14 @@ class algorithms:
         search_frontier.add(start)
         if visual_output:
             counter = 0
-            visualizer_input_list.append((explored.copy(), search_frontier.copy(), f"step {counter} (start)", f"output/{counter}.png")) # type: ignore
+            visualizer_input_list.append(
+                (
+                    explored.copy(),
+                    search_frontier.copy(),
+                    f"step {counter} (start)",
+                    os.path.join(output_dir, f"{counter}.png"),  # write under output_dir
+                )
+            )  # type: ignore
             counter+=1
 
         while not frontier.is_empty():
@@ -98,7 +79,13 @@ class algorithms:
                     drawer = _tree_drawer()
                     for input in visualizer_input_list: # type: ignore
                         drawer.draw(input[0], input[1], None, title=input[2], out_file=input[3]) # type: ignore
-                    drawer.draw(explored.copy(), search_frontier.copy(), state, f"step {counter} (start)", f"output/{counter}.png") # type: ignore
+                    drawer.draw(
+                        explored.copy(),
+                        search_frontier.copy(),
+                        state,
+                        f"step {counter} (goal)",
+                        os.path.join(output_dir, f"{counter}.png"),  # write under output_dir
+                    )  # type: ignore
                 
                 return self.result(explored, start, state, time_taken)
 
@@ -108,7 +95,14 @@ class algorithms:
                     search_frontier.add(neighbor)
 
             if visual_output:
-                visualizer_input_list.append((explored.copy(), search_frontier.copy(), f"step {counter}", f"output/{counter}.png")) #type: ignore
+                visualizer_input_list.append(
+                    (
+                        explored.copy(),
+                        search_frontier.copy(),
+                        f"step {counter}",
+                        os.path.join(output_dir, f"{counter}.png"),  # write under output_dir
+                    )
+                )  #type: ignore
                 counter += 1 # type: ignore
 
         return self.result(explored, start, None, time() - start_time)
@@ -164,9 +158,11 @@ class algorithms:
                 
         # Return failure if the limit is exceeded without finding a goal
         return self.result(all_explored, start_node, None, time() - start_time)
-    def dfs(self, visual_output: bool) -> algorithms.result:
+    def dfs(self, visual_output: bool, output_dir: str = "output") -> algorithms.result:
+        # output_dir added so visualization PNGs can be routed to a model-specific folder
+        # (e.g., output/dfs/) instead of always writing into the shared output/ directory.
         if visual_output:
-            os.makedirs("output", exist_ok=True)
+            os.makedirs(output_dir, exist_ok=True)  # ensure output_dir exists before writing PNGs
             visualizer_input_list: list[tuple[set, set, str, str]] = []
             counter = 0
 
@@ -181,7 +177,14 @@ class algorithms:
         search_frontier.add(start)
 
         if visual_output:
-            visualizer_input_list.append((explored.copy(), search_frontier.copy(), f"step {counter} (start)", f"output/{counter}.png")) # type: ignore
+            visualizer_input_list.append(
+                (
+                    explored.copy(),
+                    search_frontier.copy(),
+                    f"step {counter} (start)",
+                    os.path.join(output_dir, f"{counter}.png"),  # write under output_dir
+                )
+            )  # type: ignore
             counter += 1
 
         while not frontier.is_empty():
@@ -197,7 +200,13 @@ class algorithms:
                     drawer = _tree_drawer()
                     for input_data in visualizer_input_list:
                         drawer.draw(input_data[0], input_data[1], None, title=input_data[2], out_file=input_data[3])
-                    drawer.draw(explored.copy(), search_frontier.copy(), state, f"step {counter} (goal)", f"output/{counter}.png")
+                    drawer.draw(
+                        explored.copy(),
+                        search_frontier.copy(),
+                        state,
+                        f"step {counter} (goal)",
+                        os.path.join(output_dir, f"{counter}.png"),  # write under output_dir
+                    )
                 
                 return self.result(explored, start, state, time_taken)
 
@@ -208,7 +217,14 @@ class algorithms:
                     search_frontier.add(neighbor)
 
             if visual_output:
-                visualizer_input_list.append((explored.copy(), search_frontier.copy(), f"step {counter}", f"output/{counter}.png")) # type: ignore
+                visualizer_input_list.append(
+                    (
+                        explored.copy(),
+                        search_frontier.copy(),
+                        f"step {counter}",
+                        os.path.join(output_dir, f"{counter}.png"),  # write under output_dir
+                    )
+                )  # type: ignore
                 counter += 1
 
         return self.result(explored, start, None, time() - start_time)
