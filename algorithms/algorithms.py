@@ -20,32 +20,43 @@ class algorithms:
         goal_state: board_state|None
         time_taken: float
 
-        def save_report(self, out_file="report.txt"):
-            if not self.goal_state:
-                print(f"Time taken: {self.time_taken:.4f} seconds\n")
-                print(f"Number of states explored: {len(self.explored)}\n")
-                print("No solution found.\n")
-                return 
+        # Metadata for reporting (kept optional for backward compatibility)
+        algorithm: str = ""
+        heuristic: str | None = None
+        data_structure: str = ""
+        assumptions: list[str] | None = None
+        extra_work: list[str] | None = None
 
-            goal_path: list[board_state] = self.goal_state.get_path()
-            cost_of_path: int = self.goal_state.level
-            search_depth: int = max(state.level for state in self.explored)
-            print(f"Time taken: {self.time_taken:.4f} seconds\n")
-            print(f"Number of states explored: {len(self.explored)}\n")
-            print(f"Cost of path: {cost_of_path}\n")
-            print(f"Search depth: {search_depth}\n")
-            print("Path to solution:\n")
-            for step, state in enumerate(goal_path):
-                print(f"Step {step}:\n{state.board}\n")
+        def save_report(self, out_file: str = "report.pdf"):
+            from algorithms.reporting import save_search_report
+
+            save_search_report(
+                explored=self.explored,
+                start_state=self.start_state,
+                goal_state=self.goal_state,
+                time_taken=self.time_taken,
+                out_file=out_file,
+                algorithm=self.algorithm,
+                heuristic=self.heuristic,
+                data_structure=self.data_structure,
+                assumptions=self.assumptions,
+                extra_work=self.extra_work,
+            )
 
 
     def bfs(self, visual_output:bool) -> algorithms.result:
+        """Breadth-First Search (BFS).
+
+        Uses:
+        - Frontier: FIFO queue
+        - Visited/explored: set (hashing) to avoid revisiting states
+        """
         if visual_output:
             os.makedirs("output", exist_ok=True)
             visualizer_input_list: list[tuple[set, set, str, str]] = []
 
         start_time = time()
-        start = board_state(self._puzzle, None, False)
+        start = board_state(self._puzzle, None)
         explored = set()
         frontier = queue()
         search_frontier = set() # for o(1) search instead of O(n) in the queue
@@ -72,7 +83,15 @@ class algorithms:
                         drawer.draw(input[0], input[1], None, title=input[2], out_file=input[3]) # type: ignore
                     drawer.draw(explored.copy(), search_frontier.copy(), state, f"step {counter} (start)", f"output/{counter}.png") # type: ignore
                 
-                return self.result(explored, start, state, time_taken)
+                return self.result(
+                    explored,
+                    start,
+                    state,
+                    time_taken,
+                    algorithm="BFS",
+                    heuristic=None,
+                    data_structure="Queue (FIFO) using collections.deque + explored/frontier sets",
+                )
 
             for neighbor in state.neighbors:
                 if neighbor not in explored and neighbor not in search_frontier:
@@ -83,9 +102,18 @@ class algorithms:
                 visualizer_input_list.append((explored.copy(), search_frontier.copy(), f"step {counter}", f"output/{counter}.png")) #type: ignore
                 counter += 1 # type: ignore
 
-        return self.result(explored, start, None, time() - start_time)
 
-        def ids(self, visual_output: bool = False) -> algorithms.result:
+        return self.result(
+            explored,
+            start,
+            None,
+            time() - start_time,
+            algorithm="BFS",
+            heuristic=None,
+            data_structure="Queue (FIFO) using collections.deque + explored/frontier sets",
+        )
+
+    def ids(self, visual_output: bool = False) -> algorithms.result:
         start_time = time()
         start_node = board_state(self._puzzle, None)
         
@@ -136,7 +164,7 @@ class algorithms:
                 
         # Return failure if the limit is exceeded without finding a goal
         return self.result(all_explored, start_node, None, time() - start_time)
-        def dfs(self, visual_output: bool) -> algorithms.result:
+    def dfs(self, visual_output: bool) -> algorithms.result:
         if visual_output:
             os.makedirs("output", exist_ok=True)
             visualizer_input_list: list[tuple[set, set, str, str]] = []
@@ -184,10 +212,22 @@ class algorithms:
                 counter += 1
 
         return self.result(explored, start, None, time() - start_time)
+
     
-    def A_star(self, visual_output: bool, heuristic: str = "manhattan") -> algorithms.result:
+    def A_star(
+        self,
+        visual_output: bool,
+        heuristic: str = "manhattan",
+        output_dir: str = "output",
+    ) -> algorithms.result:
+        """A* search.
+
+        Uses:
+        - Frontier: priority queue (min-heap) ordered by f=g+h
+        - best_g dict: tracks best known g-cost per state to skip stale heap entries
+        """
         if visual_output:
-            os.makedirs("output", exist_ok=True)
+            os.makedirs(output_dir, exist_ok=True)
             visualizer_input_list: list[tuple[set, set, str, str]] = []
             counter = 0
 
@@ -195,8 +235,10 @@ class algorithms:
         heuristic_normalized = heuristic.strip().lower().replace("-", "").replace("_", "")
         if heuristic_normalized in {"manhattan", "manhattandistance"}:
             start = board_state(self._puzzle, None, Manhattan_heuristics=True)
+            heuristic_label = "Manhattan"
         elif heuristic_normalized in {"euclidean", "eucledian", "euclideandistance", "euclediandistance"}:
             start = board_state(self._puzzle, None, eucledian_heuristics=True)
+            heuristic_label = "Euclidean"
         else:
             raise ValueError("A_star heuristic must be 'manhattan' or 'euclidean'.")
 
@@ -209,7 +251,12 @@ class algorithms:
         frontier_view.add(start)
         if visual_output:
             visualizer_input_list.append(
-                (explored.copy(), frontier_view.copy(), f"step {counter} (start)", f"output/{counter}.png")
+                (
+                    explored.copy(),
+                    frontier_view.copy(),
+                    f"step {counter} (start)",
+                    os.path.join(output_dir, f"{counter}.png"),
+                )
             )
             counter += 1
 
@@ -218,7 +265,7 @@ class algorithms:
             frontier_view.discard(state)
 
             best_known = best_g.get(state)
-            if best_known is None or state.cost != best_known:
+            if best_known is None or state.cost != best_known:#ADD MORE SECURITY TO CHECK THERE IS ONE NODE WITH OPTIMAL COST FOUND
                 continue
 
             explored.add(state)
@@ -235,21 +282,34 @@ class algorithms:
                         frontier_view.copy(),
                         state,
                         title=f"step {counter} (goal)",
-                        out_file=f"output/{counter}.png",
+                        out_file=os.path.join(output_dir, f"{counter}.png"),
                     )  # type: ignore
-                return self.result(explored, start, state, time_taken)
+                return self.result(
+                    explored,
+                    start,
+                    state,
+                    time_taken,
+                    algorithm="A*",
+                    heuristic=heuristic_label,
+                    data_structure="Priority queue (min-heap via heapq) ordered by f=g+h + best_g dictionary",
+                )
 
             for neighbor in state.neighbors:
                 tentative_g = neighbor.cost
                 prev_best = best_g.get(neighbor)
-                if prev_best is None or tentative_g < prev_best:
-                    best_g[neighbor] = tentative_g
-                    frontier.insert(neighbor)
+                if prev_best is None or tentative_g < prev_best:#node=NONE MEAN THAT WE DIDN'T ADD IT TO best_g YET SO IT DIDN'T HAVE VALUE
+                    best_g[neighbor] = tentative_g              #tentative_g < prev_best CHECK THAT WE WILL ADD THE OPTIMAL COST OF THE NODE 
+                    frontier.insert(neighbor)   #THE SORTING TECHNIC HER DEPEND ON __lt__ which depend on f=g+h in state.py 
                     frontier_view.add(neighbor)
 
             if visual_output:
                 visualizer_input_list.append(
-                    (explored.copy(), frontier_view.copy(), f"step {counter}", f"output/{counter}.png")
+                    (
+                        explored.copy(),
+                        frontier_view.copy(),
+                        f"step {counter}",
+                        os.path.join(output_dir, f"{counter}.png"),
+                    )
                 )  # type: ignore
                 counter += 1
 

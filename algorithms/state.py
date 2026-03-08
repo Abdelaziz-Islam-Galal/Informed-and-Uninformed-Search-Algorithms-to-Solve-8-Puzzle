@@ -11,11 +11,14 @@ class board_state:
         self,
         board: board_8_puzzle,
         parent: board_state | None = None,
+        move: str | None = None,
         Manhattan_heuristics: bool = False,
         eucledian_heuristics: bool = False
     ):
         self.board = board
         self.parent = parent
+        # The action taken from parent -> this state (e.g., 'up', 'down', 'left', 'right')
+        self.move = move
         self.cost = 0 if parent is None else parent.cost + 1 # cost = (level-1)
         self._neighbors: list[board_state] | None = None
 
@@ -46,7 +49,7 @@ class board_state:
             for direction in ["up", "down", "left", "right"]:
                 new_board = self.board.copy()
                 if new_board.move_zero(direction):
-                    neighbors.append(board_state(new_board, self))
+                    neighbors.append(board_state(new_board, self, move=direction))
             self._neighbors = neighbors
 
         return self._neighbors
