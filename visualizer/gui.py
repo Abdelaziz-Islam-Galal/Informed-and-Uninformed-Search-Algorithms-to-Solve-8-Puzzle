@@ -17,6 +17,11 @@ Features
 
 from __future__ import annotations
 
+import os, sys
+# Ensure the project root is on sys.path so "board" / "algorithms" imports work
+# when this file is executed directly (python visualizer/gui.py).
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import threading
 import tkinter as tk
 from tkinter import messagebox

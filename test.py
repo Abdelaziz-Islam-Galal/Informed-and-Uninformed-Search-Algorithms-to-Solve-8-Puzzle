@@ -37,7 +37,7 @@ def _clear_output_dir(output_root: str = "output") -> None:
     os.makedirs(output_root, exist_ok=True)
 
 
-SUBMISSION_INITIAL = [[1, 2, 5], [3, 4, 0], [6, 7, 8]]
+SUBMISSION_INITIAL = [[2, 1, 5], [3, 4, 0], [6, 7, 8]]
 
 
 def _moves_string(result: algorithms.result) -> str:

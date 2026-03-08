@@ -136,6 +136,7 @@ class algorithms:
         all_explored = set()
         max_depth = 0
         limit = 0
+        limit_counter = 0  # total nodes expanded across all depth iterations
 
         print("Starting IDS Search...")
 
@@ -164,7 +165,13 @@ class algorithms:
                 frontier_set.remove(current)
                 explored_in_this_run.add(current)
                 max_depth = max(max_depth, current.level)
+                limit_counter += 1
 
+                # Stop if we exceeded the global state limit (same as DFS/BFS)
+                if limit_counter >= self.LIMIT_STATES:
+                    print(f"IDS: Reached state limit of {self.LIMIT_STATES}. Terminating search.")
+                    all_explored.update(explored_in_this_run)
+                    return self.result(all_explored, start_node, None, time() - start_time, max_depth, algorithm="IDS", data_structure="LIFO Stack (Python list) + visited set (per iteration)")
 
                 if current.is_goal():
                     goal_node = current
