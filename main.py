@@ -48,7 +48,7 @@ def _print_result(name: str, result: algorithms.result) -> None:
     print(f"{name}:")
     print(f"  Solved: {result.goal_state is not None}")
     print(f"  Expanded nodes: {len(result.explored)}")
-    print(f"  Cost of path: {result.goal_state.level if result.goal_state else 'N/A'}")
+    print(f"  Cost of path: {result.goal_state.cost if result.goal_state else 'N/A'}")
     print(f"  Search depth: {result.max_depth}")
     print(f"  Moves (U/D/L/R): {_moves_string(result)}")
     print(f"  Time: {result.time_taken:.4f} sec")
@@ -158,7 +158,7 @@ def find_astar_heuristic_difference_example(
                 print("Board:")
                 print(board)
                 print(f"Expanded nodes: Manhattan={man_expanded}, Euclidean={euc_expanded}")
-                print(f"Cost of path:   Manhattan={man.goal_state.level}, Euclidean={euc.goal_state.level}")
+                print(f"Cost of path:   Manhattan={man.goal_state.cost}, Euclidean={euc.goal_state.cost}")
                 return board
 
     print("No difference found in the given search budget.")
