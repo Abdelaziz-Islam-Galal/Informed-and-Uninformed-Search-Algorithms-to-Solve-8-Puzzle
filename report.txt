@@ -1,17 +1,254 @@
-Time taken: 0.0005 seconds
-Number of states explored: 11
-Cost of path: 3
-Search depth: 3
-Path to solution:
-Step 0: 1 2 5
+======================================================================
+   8-PUZZLE SEARCH REPORT
+   Generated: 2026-03-08 22:03:06
+======================================================================
+
+Initial state:
+1 2 5
 3 4 0
 6 7 8
-Step 1: 1 2 0
+
+Goal state:
+0 1 2
 3 4 5
 6 7 8
-Step 2: 1 0 2
-3 4 5
-6 7 8
-Step 3: 0 1 2
-3 4 5
-6 7 8
+
+----------------------------------------------------------------------
+  Breadth-First Search (BFS)
+----------------------------------------------------------------------
+  Solved:          Yes
+  Expanded nodes:  11
+  Cost of path:    3
+  Search depth:    3
+  Running time:    0.0000 sec
+  Data structure:  FIFO Queue (collections.deque) + visited set
+
+  Explanation: BFS explores the search tree level-by-level, expanding every node at the current depth before moving deeper.  Because each move has unit cost, BFS is both complete and optimal — it always finds the shortest solution path.  The frontier is a FIFO queue; a hash-set tracks visited states for O(1) duplicate detection.
+
+  Moves: U → L → L
+
+  Step 0 [START]  g=0
+    1 2 5
+    3 4 0
+    6 7 8
+
+  Step 1 [U]  g=1
+    1 2 0
+    3 4 5
+    6 7 8
+
+  Step 2 [L]  g=2
+    1 0 2
+    3 4 5
+    6 7 8
+
+  Step 3 [L]  g=3
+    0 1 2
+    3 4 5
+    6 7 8
+
+----------------------------------------------------------------------
+  A* HEURISTIC COMPARISON (Manhattan vs Euclidean)
+----------------------------------------------------------------------
+  Expanded nodes:  Manhattan = 4   |   Euclidean = 4
+  Cost of path:    Manhattan = 3   |   Euclidean = 3
+  Moves (path):    Manhattan = U → L → L
+                 Euclidean = U → L → L
+
+  Admissibility: Both heuristics are admissible for the 8-puzzle when h(n) is computed as the sum of per-tile distances to their goal positions (ignoring the blank).
+  Which is 'more admissible'? Admissibility is a yes/no property, so both are admissible.  However, Manhattan dominates Euclidean (for each tile, L1 distance ≥ L2 distance), so it is more informed and typically expands fewer nodes while still guaranteeing an optimal solution under A*.
+
+----------------------------------------------------------------------
+  Depth-First Search (DFS)
+----------------------------------------------------------------------
+  Solved:          Yes
+  Expanded nodes:  181438
+  Cost of path:    3
+  Search depth:    66125
+  Running time:    3.7845 sec
+  Data structure:  LIFO Stack (Python list) + visited set
+
+  Explanation: DFS dives as deep as possible along each branch before back-tracking. It uses a stack (LIFO order).  DFS is memory-efficient but NOT optimal: it may find a very long path even when a short one exists.  A state-expansion limit prevents runaway execution.
+
+  Moves: U → L → L
+
+  Step 0 [START]  g=0
+    1 2 5
+    3 4 0
+    6 7 8
+
+  Step 1 [U]  g=1
+    1 2 0
+    3 4 5
+    6 7 8
+
+  Step 2 [L]  g=2
+    1 0 2
+    3 4 5
+    6 7 8
+
+  Step 3 [L]  g=3
+    0 1 2
+    3 4 5
+    6 7 8
+
+----------------------------------------------------------------------
+  A* HEURISTIC COMPARISON (Manhattan vs Euclidean)
+----------------------------------------------------------------------
+  Expanded nodes:  Manhattan = 4   |   Euclidean = 4
+  Cost of path:    Manhattan = 3   |   Euclidean = 3
+  Moves (path):    Manhattan = U → L → L
+                 Euclidean = U → L → L
+
+  Admissibility: Both heuristics are admissible for the 8-puzzle when h(n) is computed as the sum of per-tile distances to their goal positions (ignoring the blank).
+  Which is 'more admissible'? Admissibility is a yes/no property, so both are admissible.  However, Manhattan dominates Euclidean (for each tile, L1 distance ≥ L2 distance), so it is more informed and typically expands fewer nodes while still guaranteeing an optimal solution under A*.
+
+----------------------------------------------------------------------
+  Iterative Deepening Search (IDS)
+----------------------------------------------------------------------
+  Solved:          Yes
+  Expanded nodes:  11
+  Cost of path:    3
+  Search depth:    3
+  Running time:    0.0000 sec
+  Data structure:  LIFO Stack (Python list) + visited set (per iteration)
+
+  Explanation: IDS runs depth-limited DFS repeatedly, increasing the depth limit by 1 each iteration.  It combines BFS's optimality/completeness with DFS's low memory usage.  The overhead of re-expansion is bounded by a constant factor for tree-like graphs.
+
+  Moves: U → L → L
+
+  Step 0 [START]  g=0
+    1 2 5
+    3 4 0
+    6 7 8
+
+  Step 1 [U]  g=1
+    1 2 0
+    3 4 5
+    6 7 8
+
+  Step 2 [L]  g=2
+    1 0 2
+    3 4 5
+    6 7 8
+
+  Step 3 [L]  g=3
+    0 1 2
+    3 4 5
+    6 7 8
+
+----------------------------------------------------------------------
+  A* HEURISTIC COMPARISON (Manhattan vs Euclidean)
+----------------------------------------------------------------------
+  Expanded nodes:  Manhattan = 4   |   Euclidean = 4
+  Cost of path:    Manhattan = 3   |   Euclidean = 3
+  Moves (path):    Manhattan = U → L → L
+                 Euclidean = U → L → L
+
+  Admissibility: Both heuristics are admissible for the 8-puzzle when h(n) is computed as the sum of per-tile distances to their goal positions (ignoring the blank).
+  Which is 'more admissible'? Admissibility is a yes/no property, so both are admissible.  However, Manhattan dominates Euclidean (for each tile, L1 distance ≥ L2 distance), so it is more informed and typically expands fewer nodes while still guaranteeing an optimal solution under A*.
+
+----------------------------------------------------------------------
+  A* Search (Manhattan)
+----------------------------------------------------------------------
+  Solved:          Yes
+  Expanded nodes:  4
+  Cost of path:    3
+  Search depth:    3
+  Running time:    0.0000 sec
+  Data structure:  Priority queue (min-heap via heapq) ordered by f=g+h + best_g dictionary
+
+  Explanation: A* expands the node with the lowest f(n) = g(n) + h(n), where g is the cost-so-far and h is an admissible heuristic estimate.  With an admissible and consistent heuristic A* is both optimal and complete.  A best_g dictionary prunes stale heap entries whose g-cost has already been improved.  Heuristic used: Manhattan.
+
+  Moves: U → L → L
+
+  Step 0 [START]  g=0
+    1 2 5
+    3 4 0
+    6 7 8
+
+  Step 1 [U]  g=1
+    1 2 0
+    3 4 5
+    6 7 8
+
+  Step 2 [L]  g=2
+    1 0 2
+    3 4 5
+    6 7 8
+
+  Step 3 [L]  g=3
+    0 1 2
+    3 4 5
+    6 7 8
+
+----------------------------------------------------------------------
+  A* HEURISTIC COMPARISON (Manhattan vs Euclidean)
+----------------------------------------------------------------------
+  Expanded nodes:  Manhattan = 4   |   Euclidean = 4
+  Cost of path:    Manhattan = 3   |   Euclidean = 3
+  Moves (path):    Manhattan = U → L → L
+                 Euclidean = U → L → L
+
+  Admissibility: Both heuristics are admissible for the 8-puzzle when h(n) is computed as the sum of per-tile distances to their goal positions (ignoring the blank).
+  Which is 'more admissible'? Admissibility is a yes/no property, so both are admissible.  However, Manhattan dominates Euclidean (for each tile, L1 distance ≥ L2 distance), so it is more informed and typically expands fewer nodes while still guaranteeing an optimal solution under A*.
+
+----------------------------------------------------------------------
+  A* Search (Euclidean)
+----------------------------------------------------------------------
+  Solved:          Yes
+  Expanded nodes:  4
+  Cost of path:    3
+  Search depth:    3
+  Running time:    0.0000 sec
+  Data structure:  Priority queue (min-heap via heapq) ordered by f=g+h + best_g dictionary
+
+  Explanation: A* expands the node with the lowest f(n) = g(n) + h(n), where g is the cost-so-far and h is an admissible heuristic estimate.  With an admissible and consistent heuristic A* is both optimal and complete.  A best_g dictionary prunes stale heap entries whose g-cost has already been improved.  Heuristic used: Euclidean.
+
+  Moves: U → L → L
+
+  Step 0 [START]  g=0
+    1 2 5
+    3 4 0
+    6 7 8
+
+  Step 1 [U]  g=1
+    1 2 0
+    3 4 5
+    6 7 8
+
+  Step 2 [L]  g=2
+    1 0 2
+    3 4 5
+    6 7 8
+
+  Step 3 [L]  g=3
+    0 1 2
+    3 4 5
+    6 7 8
+
+----------------------------------------------------------------------
+  A* HEURISTIC COMPARISON (Manhattan vs Euclidean)
+----------------------------------------------------------------------
+  Expanded nodes:  Manhattan = 4   |   Euclidean = 4
+  Cost of path:    Manhattan = 3   |   Euclidean = 3
+  Moves (path):    Manhattan = U → L → L
+                 Euclidean = U → L → L
+
+  Admissibility: Both heuristics are admissible for the 8-puzzle when h(n) is computed as the sum of per-tile distances to their goal positions (ignoring the blank).
+  Which is 'more admissible'? Admissibility is a yes/no property, so both are admissible.  However, Manhattan dominates Euclidean (for each tile, L1 distance ≥ L2 distance), so it is more informed and typically expands fewer nodes while still guaranteeing an optimal solution under A*.
+
+======================================================================
+ASSUMPTIONS
+  • The board is a standard 3×3 8-puzzle with exactly one blank tile (0).
+  • The goal state is the canonical ordering: 0 1 2 / 3 4 5 / 6 7 8.
+  • If the initial state is unsolvable (wrong parity), no algorithm will find a path.
+  • Shuffle-based sample runs always generate solvable instances (random moves from goal).
+  • A state-expansion limit (LIMIT_STATES) prevents runaway execution for DFS/BFS.
+
+EXTRA WORK
+  • Traceable step-by-step path with directional move labels (U / D / L / R).
+  • Interactive tkinter GUI with algorithm picker, speed slider, and live statistics.
+  • Per-algorithm search-tree PNG visualization stored in output/<algorithm>/.
+  • Combined PDF report with cover page, comparison table, and per-algorithm details.
+======================================================================

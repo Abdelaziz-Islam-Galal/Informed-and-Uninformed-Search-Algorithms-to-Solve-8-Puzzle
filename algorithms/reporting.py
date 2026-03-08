@@ -110,6 +110,73 @@ def _search_depth(states: Iterable[board_state]) -> int:
     return max((s.level for s in states), default=0)
 
 
+def _normalize_heuristic_name(name: str | None) -> str | None:
+    if not name:
+        return None
+    norm = name.strip().lower().replace("-", "").replace("_", "").replace(" ", "")
+    if norm in {"manhattan", "manhattandistance"}:
+        return "manhattan"
+    if norm in {"euclidean", "eucledian", "euclideandistance", "euclediandistance"}:
+        return "euclidean"
+    return norm
+
+
+def _find_astar_heuristic_results(results: dict[str, object]):
+    """Return (manhattan_res, euclidean_res) if present in results; else (None, None)."""
+    man = None
+    euc = None
+    for res in results.values():
+        algo = getattr(res, "algorithm", "")
+        if _algo_key(algo) not in {"A*", "ASTAR"}:
+            continue
+        heur = _normalize_heuristic_name(getattr(res, "heuristic", None))
+        if heur == "manhattan":
+            man = res
+        elif heur == "euclidean":
+            euc = res
+    return man, euc
+
+
+def _build_astar_heuristic_comparison_txt(results: dict[str, object]) -> list[str]:
+    man, euc = _find_astar_heuristic_results(results)
+    if man is None or euc is None:
+        return []
+
+    def _expanded(r) -> int:
+        return len(getattr(r, "explored", []))
+
+    def _cost(r):
+        goal = getattr(r, "goal_state", None)
+        return goal.level if goal else "N/A"
+
+    def _moves(r) -> str:
+        goal = getattr(r, "goal_state", None)
+        if not goal:
+            return "N/A"
+        return _format_moves(goal.get_path())
+
+    lines: list[str] = []
+    lines.append("-" * 70)
+    lines.append("  A* HEURISTIC COMPARISON (Manhattan vs Euclidean)")
+    lines.append("-" * 70)
+    lines.append(f"  Expanded nodes:  Manhattan = {_expanded(man)}   |   Euclidean = {_expanded(euc)}")
+    lines.append(f"  Cost of path:    Manhattan = {_cost(man)}   |   Euclidean = {_cost(euc)}")
+    lines.append(f"  Moves (path):    Manhattan = {_moves(man)}")
+    lines.append(f"                 Euclidean = {_moves(euc)}")
+    lines.append("")
+    lines.append(
+        "  Admissibility: Both heuristics are admissible for the 8-puzzle when h(n) is computed as the sum "
+        "of per-tile distances to their goal positions (ignoring the blank)."
+    )
+    lines.append(
+        "  Which is 'more admissible'? Admissibility is a yes/no property, so both are admissible.  "
+        "However, Manhattan dominates Euclidean (for each tile, L1 distance ≥ L2 distance), so it is more "
+        "informed and typically expands fewer nodes while still guaranteeing an optimal solution under A*."
+    )
+    lines.append("")
+    return lines
+
+
 def _draw_board(ax, matrix: list[list[int]], *, title: str = "", fontsize: int = 20) -> None:
     patches_mod = importlib.import_module("matplotlib.patches")
     ax.set_xlim(-0.05, 3.05)
@@ -265,6 +332,8 @@ def _build_txt(results, start_board, assumptions, extras) -> str:
                     lines.append("    " + " ".join(str(c) for c in row))
                 lines.append("")
 
+    lines.extend(_build_astar_heuristic_comparison_txt(results))
+
     lines.append("=" * 70)
     lines.append("ASSUMPTIONS")
     for a in assumptions:
@@ -395,7 +464,84 @@ def _generate_pdf(results, start_board, out_file, assumptions, extras) -> None:
                         fontweight="bold",
                     )
 
+        # Optional note under the table: A* heuristic comparison (Manhattan vs Euclidean)
+        man, euc = _find_astar_heuristic_results(results)
+        if man is not None and euc is not None:
+            man_exp = len(getattr(man, "explored", []))
+            euc_exp = len(getattr(euc, "explored", []))
+            man_cost = getattr(getattr(man, "goal_state", None), "level", "N/A")
+            euc_cost = getattr(getattr(euc, "goal_state", None), "level", "N/A")
+            note = (
+                "A* heuristics: Manhattan vs Euclidean.  "
+                f"Expanded: {man_exp} vs {euc_exp}.  Cost: {man_cost} vs {euc_cost}.\n"
+                "Admissibility: both are admissible (sum of per-tile distances, blank ignored).  "
+                "Manhattan dominates Euclidean (L1 \u2265 L2), so it is more informed and typically expands fewer nodes."
+            )
+            fig.text(0.05, 0.06, note, fontsize=9, color="#37474f", va="bottom", wrap=True)
+
         pdf.savefig(fig); plt.close(fig)
+
+        # ── PAGE 3: A* HEURISTIC COMPARISON (optional) ───────────────────
+        man, euc = _find_astar_heuristic_results(results)
+        if man is not None and euc is not None:
+            fig = plt.figure(figsize=(W, H), facecolor="white")
+            fig.text(
+                0.5, 0.94, "A* Heuristic Comparison",
+                ha="center", fontsize=22, fontweight="bold", color=_CLR_PRIMARY,
+            )
+            fig.text(
+                0.5, 0.905, "Manhattan vs Euclidean",
+                ha="center", fontsize=12, color="#546e7a",
+            )
+            line_ax = fig.add_axes([0.1, 0.892, 0.8, 0.004])
+            line_ax.axhline(0.5, color=_CLR_ACCENT, linewidth=2)
+            line_ax.axis("off")
+
+            def _expanded(r) -> int:
+                return len(getattr(r, "explored", []))
+
+            def _cost(r):
+                goal = getattr(r, "goal_state", None)
+                return goal.level if goal else "N/A"
+
+            def _time(r) -> float:
+                return float(getattr(r, "time_taken", 0.0) or 0.0)
+
+            def _moves(r) -> str:
+                goal = getattr(r, "goal_state", None)
+                if not goal:
+                    return "N/A"
+                return _format_moves(goal.get_path())
+
+            man_stats = [
+                "Manhattan",
+                f"Expanded nodes:  {_expanded(man)}",
+                f"Cost of path:    {_cost(man)}",
+                f"Running time:    {_time(man):.4f} sec",
+                f"Moves:           {_moves(man)}",
+            ]
+            euc_stats = [
+                "Euclidean",
+                f"Expanded nodes:  {_expanded(euc)}",
+                f"Cost of path:    {_cost(euc)}",
+                f"Running time:    {_time(euc):.4f} sec",
+                f"Moves:           {_moves(euc)}",
+            ]
+
+            fig.text(0.08, 0.84, "\n".join(man_stats), fontsize=11, family="monospace", va="top", color="#212121")
+            fig.text(0.08, 0.66, "\n".join(euc_stats), fontsize=11, family="monospace", va="top", color="#212121")
+
+            explanation = (
+                "Admissibility (A*): A heuristic is admissible if it never overestimates the true remaining cost. "
+                "For the 8-puzzle with unit step costs, both Manhattan and Euclidean (computed as the sum of per-tile "
+                "distances to goal positions, ignoring the blank) are admissible.\n\n"
+                "Which is 'more admissible'? Admissibility is a yes/no property, so both are admissible. "
+                "But Manhattan is more informed because for every tile: L1 distance \u2265 L2 distance. Therefore h_Manhattan(n) \u2265 h_Euclidean(n) "
+                "for all states n (dominance), so A* with Manhattan typically expands fewer nodes than with Euclidean while still returning an optimal path."
+            )
+            fig.text(0.08, 0.54, "Conclusion:", fontsize=12, fontweight="bold", color=_CLR_PRIMARY, va="top")
+            fig.text(0.08, 0.515, explanation, fontsize=10, color="#37474f", va="top", wrap=True)
+            pdf.savefig(fig); plt.close(fig)
 
         # ── PER-ALGORITHM DETAIL PAGES ────────────────────────────────────
         move_map = {"up": "U", "down": "D", "left": "L", "right": "R"}
