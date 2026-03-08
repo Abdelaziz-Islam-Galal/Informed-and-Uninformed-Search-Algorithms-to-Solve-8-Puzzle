@@ -105,11 +105,6 @@ def _format_moves(path: list[board_state]) -> str:
     moves = [move_map.get(s.move, s.move) for s in path[1:] if s.move]
     return " \u2192 ".join(moves) if moves else "(none)"
 
-
-def _search_depth(states: Iterable[board_state]) -> int:
-    return max((s.level for s in states), default=0)
-
-
 def _draw_board(ax, matrix: list[list[int]], *, title: str = "", fontsize: int = 20) -> None:
     patches_mod = importlib.import_module("matplotlib.patches")
     ax.set_xlim(-0.05, 3.05)
@@ -138,16 +133,12 @@ def _draw_board(ax, matrix: list[list[int]], *, title: str = "", fontsize: int =
             )
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  Backward-compatible single-algorithm entry point
-# ═══════════════════════════════════════════════════════════════════════════════
-
 def save_search_report(
-    *,
     explored: set[board_state],
     start_state: board_state,
     goal_state: board_state | None,
     time_taken: float,
+    max_depth: int,
     out_file: str = "report.pdf",
     algorithm: str = "",
     heuristic: str | None = None,
@@ -163,7 +154,7 @@ def save_search_report(
         start_state=start_state,
         goal_state=goal_state,
         time_taken=time_taken,
-        max_depth=_search_depth(explored),
+        max_depth=max_depth,
         algorithm=algorithm,
         heuristic=heuristic,
         data_structure=data_structure,
@@ -176,10 +167,6 @@ def save_search_report(
         out_file=out_file,
     )
 
-
-# ═══════════════════════════════════════════════════════════════════════════════
-#  Multi-algorithm combined report  (main public API)
-# ═══════════════════════════════════════════════════════════════════════════════
 
 def generate_full_report(
     *,
@@ -220,8 +207,6 @@ def generate_full_report(
         print(_build_txt(results, start_board, final_assumptions, final_extras))
 
 
-# ─── Text fallback ────────────────────────────────────────────────────────────
-
 def _build_txt(results, start_board, assumptions, extras) -> str:
     lines: list[str] = []
     lines.append("=" * 70)
@@ -246,7 +231,7 @@ def _build_txt(results, start_board, assumptions, extras) -> str:
         lines.append(f"  Solved:          {'Yes' if solved else 'No'}")
         lines.append(f"  Expanded nodes:  {len(res.explored)}")
         lines.append(f"  Cost of path:    {cost}")
-        lines.append(f"  Search depth:    {_search_depth(res.explored)}")
+        lines.append(f"  Search depth:    {res.max_depth}")
         lines.append(f"  Running time:    {res.time_taken:.4f} sec")
         lines.append(f"  Data structure:  {res.data_structure or info['data_structure']}")
         lines.append("")
@@ -285,8 +270,6 @@ def _generate_txt(results, start_board, out_file, assumptions, extras) -> None:
         f.write(_build_txt(results, start_board, assumptions, extras))
 
 
-# ─── PDF generation ───────────────────────────────────────────────────────────
-
 def _generate_pdf(results, start_board, out_file, assumptions, extras) -> None:
     try:
         plt = importlib.import_module("matplotlib.pyplot")
@@ -305,7 +288,7 @@ def _generate_pdf(results, start_board, out_file, assumptions, extras) -> None:
     W, H = 8.27, 11.69  # A4
 
     with PdfPages(out_file) as pdf:
-        # ── PAGE 1: COVER ─────────────────────────────────────────────────
+        # PAGE 1: COVER 
         fig = plt.figure(figsize=(W, H), facecolor="white")
 
         fig.text(
@@ -346,7 +329,7 @@ def _generate_pdf(results, start_board, out_file, assumptions, extras) -> None:
         )
         pdf.savefig(fig); plt.close(fig)
 
-        # ── PAGE 2: COMPARISON TABLE ──────────────────────────────────────
+        # PAGE 2: COMPARISON TABLE
         fig = plt.figure(figsize=(W, H), facecolor="white")
         fig.text(
             0.5, 0.94, "Algorithm Comparison",
@@ -364,7 +347,7 @@ def _generate_pdf(results, start_board, out_file, assumptions, extras) -> None:
                 "\u2713" if solved else "\u2717",
                 str(len(res.explored)),
                 str(cost),
-                str(_search_depth(res.explored)),
+                str(res.max_depth),
                 f"{res.time_taken:.4f}",
             ])
 
@@ -397,7 +380,7 @@ def _generate_pdf(results, start_board, out_file, assumptions, extras) -> None:
 
         pdf.savefig(fig); plt.close(fig)
 
-        # ── PER-ALGORITHM DETAIL PAGES ────────────────────────────────────
+        # PER-ALGORITHM DETAIL PAGES
         move_map = {"up": "U", "down": "D", "left": "L", "right": "R"}
 
         for res in results.values():
@@ -426,7 +409,7 @@ def _generate_pdf(results, start_board, out_file, assumptions, extras) -> None:
                 f"Status:          {status_txt}",
                 f"Expanded nodes:  {len(res.explored)}",
                 f"Cost of path:    {cost}",
-                f"Search depth:    {_search_depth(res.explored)}",
+                f"Search depth:    {res.max_depth}",
                 f"Running time:    {res.time_taken:.4f} sec",
                 "",
                 f"Data structure:  {ds}",
@@ -486,7 +469,7 @@ def _generate_pdf(results, start_board, out_file, assumptions, extras) -> None:
                 if len(path) > 8:
                     _render_full_path_pages(pdf, plt, patches_mod, path, info["full_name"])
 
-        # ── CLOSING PAGE: ASSUMPTIONS & EXTRA WORK ────────────────────────
+        # CLOSING PAGE: ASSUMPTIONS & EXTRA WORK
         fig = plt.figure(figsize=(W, H), facecolor="white")
         fig.text(
             0.5, 0.92, "Assumptions & Extra Work",
