@@ -1,5 +1,5 @@
 """
-8-Puzzle Solver – Interactive GUI
+8-Puzzle Solver - Interactive GUI
 ==================================
 Run:  python gui.py
 
@@ -198,7 +198,7 @@ class PuzzleGUI(tk.Tk):
             font=FONT_SMALL, length=140,
         ).pack(side="left", padx=4)
 
-        self._step_label = tk.Label(rp, text="Step: – / –", font=FONT_LABEL, bg=PANEL_BG, fg=LABEL_FG)
+        self._step_label = tk.Label(rp, text="Step: - / -", font=FONT_LABEL, bg=PANEL_BG, fg=LABEL_FG)
         self._step_label.pack(padx=18, pady=2, anchor="w")
 
         # ─ statistics ─
@@ -208,7 +208,7 @@ class PuzzleGUI(tk.Tk):
             row = tk.Frame(rp, bg=PANEL_BG)
             row.pack(fill="x", padx=18, pady=1)
             tk.Label(row, text=f"{key}:", font=FONT_LABEL, bg=PANEL_BG, fg=LABEL_FG).pack(side="left")
-            val = tk.Label(row, text="–", font=FONT_STAT_VAL, bg=PANEL_BG, fg=STAT_VAL)
+            val = tk.Label(row, text="-", font=FONT_STAT_VAL, bg=PANEL_BG, fg=STAT_VAL)
             val.pack(side="right")
             self._stats[key] = val
 
@@ -436,7 +436,7 @@ class PuzzleGUI(tk.Tk):
     def _update_stats(self, result: algorithms.result | None) -> None:
         if result is None:
             for v in self._stats.values():
-                v.config(text="–")
+                v.config(text="-")
             return
         self._stats["Expanded"].config(text=str(len(result.explored)))
         cost = result.goal_state.level if result.goal_state else "N/A"
@@ -444,7 +444,7 @@ class PuzzleGUI(tk.Tk):
         depth = result.max_depth
         self._stats["Search Depth"].config(text=str(depth))
         self._stats["Time"].config(text=f"{result.time_taken:.4f} s")
-        moves = " ".join(self._path_moves) if self._path_moves else "–"
+        moves = " ".join(self._path_moves) if self._path_moves else "-"
         self._stats["Moves"].config(text=moves)
 
     def _clear_solution(self) -> None:
@@ -453,12 +453,12 @@ class PuzzleGUI(tk.Tk):
         self._step_idx = 0
         self._update_step_label()
         for v in self._stats.values():
-            v.config(text="–")
+            v.config(text="-")
 
     def _update_step_label(self) -> None:
         total = len(self._path_boards)
         if total == 0:
-            self._step_label.config(text="Step: – / –")
+            self._step_label.config(text="Step: - / -")
         else:
             self._step_label.config(text=f"Step: {self._step_idx} / {total - 1}")
 
