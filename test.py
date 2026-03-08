@@ -1,5 +1,18 @@
 from board import board_8_puzzle
 from algorithms.algorithms import algorithms
+import os
+import random
+
+
+def _save_report(result: algorithms.result, out_file: str) -> None:
+    try:
+        result.save_report(out_file)
+    except ModuleNotFoundError as exc:
+        print(str(exc))
+        if out_file.lower().endswith(".pdf"):
+            fallback = os.path.splitext(out_file)[0] + ".txt"
+            print(f"Falling back to text report: {fallback}")
+            result.save_report(fallback)
 
 import random
 import os
