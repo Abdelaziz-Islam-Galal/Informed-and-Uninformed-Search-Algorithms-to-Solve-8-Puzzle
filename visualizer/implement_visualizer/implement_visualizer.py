@@ -307,3 +307,4 @@ class tree_visualizer:
         plt.tight_layout()   # adjust subplot params so grids/labels don't overflow figure bounds
         plt.savefig(out_file, dpi=150, bbox_inches="tight")   # 150 DPI = clear but not huge file size
         print(f"Saved -> {out_file}")
+        plt.close(fig)  # free memory by closing the figure after saving

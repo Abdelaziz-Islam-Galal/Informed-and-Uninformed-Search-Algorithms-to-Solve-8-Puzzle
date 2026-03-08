@@ -96,12 +96,12 @@ class board_state:
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, board_state):
-            raise TypeError("Comparison is only supported between board_state instances.")
-        return tuple(self.board.board_list) == tuple(other.board.board_list)
+            return NotImplemented
+        return self.board == other.board
 
     def __hash__(self) -> int:
         """Allows board_state instances to be used in sets and dictionaries like explored and priority queue."""
-        return hash(tuple(self.board.board_list))
+        return hash(self.board)
 
     def __lt__(self, other: board_state) -> bool:
         """Defines the less-than comparison based on cost / level."""

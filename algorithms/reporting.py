@@ -105,10 +105,32 @@ def _format_moves(path: list[board_state]) -> str:
     moves = [move_map.get(s.move, s.move) for s in path[1:] if s.move]
     return " \u2192 ".join(moves) if moves else "(none)"
 
+def _draw_board(ax, matrix: list[list[int]], *, title: str = "", fontsize: int = 20) -> None:
+    patches_mod = importlib.import_module("matplotlib.patches")
+    ax.set_xlim(-0.05, 3.05)
+    ax.set_ylim(-0.05, 3.05)
+    ax.set_aspect("equal")
+    ax.axis("off")
+    if title:
+        ax.set_title(title, fontsize=12, fontweight="bold", color=_CLR_PRIMARY, pad=6)
 
-def _search_depth(states: Iterable[board_state]) -> int:
-    return max((s.level for s in states), default=0)
-
+    for r in range(3):
+        for c in range(3):
+            val = matrix[r][c]
+            bg = _CLR_TILE_ZERO if val == 0 else _CLR_TILE_BG
+            rect = patches_mod.FancyBboxPatch(
+                (c + 0.04, 2.04 - r), 0.92, 0.92,
+                boxstyle="round,pad=0.06",
+                facecolor=bg, edgecolor=_CLR_PRIMARY, linewidth=1.5,
+            )
+            ax.add_patch(rect)
+            txt = "" if val == 0 else str(val)
+            ax.text(
+                c + 0.5, 2.5 - r, txt,
+                ha="center", va="center",
+                fontsize=fontsize, fontweight="bold",
+                color=_CLR_PRIMARY, family="monospace",
+            )
 
 def _normalize_heuristic_name(name: str | None) -> str | None:
     if not name:
@@ -119,7 +141,6 @@ def _normalize_heuristic_name(name: str | None) -> str | None:
     if norm in {"euclidean", "eucledian", "euclideandistance", "euclediandistance"}:
         return "euclidean"
     return norm
-
 
 def _find_astar_heuristic_results(results: dict[str, object]):
     """Return (manhattan_res, euclidean_res) if present in results; else (None, None)."""
@@ -136,6 +157,78 @@ def _find_astar_heuristic_results(results: dict[str, object]):
             euc = res
     return man, euc
 
+def save_search_report(
+    explored: set[board_state],
+    start_state: board_state,
+    goal_state: board_state | None,
+    time_taken: float,
+    max_depth: int,
+    out_file: str = "report.pdf",
+    algorithm: str = "",
+    heuristic: str | None = None,
+    data_structure: str = "",
+    assumptions: list[str] | None = None,
+    extra_work: list[str] | None = None,
+) -> None:
+    """Save a single-algorithm report (wraps generate_full_report)."""
+    from algorithms.algorithms import algorithms as _alg
+
+    res = _alg.result(
+        explored=explored,
+        start_state=start_state,
+        goal_state=goal_state,
+        time_taken=time_taken,
+        max_depth=max_depth,
+        algorithm=algorithm,
+        heuristic=heuristic,
+        data_structure=data_structure,
+        assumptions=assumptions,
+        extra_work=extra_work,
+    )
+    generate_full_report(
+        results={algorithm or "single": res},
+        start_board=start_state.board,
+        out_file=out_file,
+    )
+
+
+def generate_full_report(
+    *,
+    results: dict[str, object],        # key = label, value = algorithms.result
+    start_board: board_8_puzzle,
+    out_file: str = "report.pdf",
+    assumptions: list[str] | None = None,
+    extra_work: list[str] | None = None,
+) -> None:
+    """Generate a polished multi-algorithm PDF (or .txt fallback).
+
+    Deletes *out_file* first so each run starts fresh.
+    """
+    if os.path.isfile(out_file):
+        os.remove(out_file)
+
+    final_assumptions = assumptions or [
+        "The board is a standard 3\u00d73 8-puzzle with exactly one blank tile (0).",
+        "The goal state is the canonical ordering: 0 1 2 / 3 4 5 / 6 7 8.",
+        "If the initial state is unsolvable (wrong parity), no algorithm will find a path.",
+        "Shuffle-based sample runs always generate solvable instances (random moves from goal).",
+        "A state-expansion limit (LIMIT_STATES) prevents runaway execution for DFS/BFS.",
+    ]
+    final_extras = extra_work or [
+        "Traceable step-by-step path with directional move labels (U / D / L / R).",
+        "Interactive tkinter GUI with algorithm picker, speed slider, and live statistics.",
+        "Per-algorithm search-tree PNG visualization stored in output/<algorithm>/.",
+        "Combined PDF report with cover page, comparison table, and per-algorithm details.",
+    ]
+
+    if out_file.lower().endswith(".pdf"):
+        _generate_pdf(results, start_board, out_file, final_assumptions, final_extras)
+        print(f"\u2713 PDF report saved to: {out_file}")
+    elif out_file.lower().endswith(".txt"):
+        _generate_txt(results, start_board, out_file, final_assumptions, final_extras)
+        print(f"\u2713 Text report saved to: {out_file}")
+    else:
+        print(_build_txt(results, start_board, final_assumptions, final_extras))
 
 def _build_astar_heuristic_comparison_txt(results: dict[str, object]) -> list[str]:
     man, euc = _find_astar_heuristic_results(results)
@@ -177,118 +270,6 @@ def _build_astar_heuristic_comparison_txt(results: dict[str, object]) -> list[st
     return lines
 
 
-def _draw_board(ax, matrix: list[list[int]], *, title: str = "", fontsize: int = 20) -> None:
-    patches_mod = importlib.import_module("matplotlib.patches")
-    ax.set_xlim(-0.05, 3.05)
-    ax.set_ylim(-0.05, 3.05)
-    ax.set_aspect("equal")
-    ax.axis("off")
-    if title:
-        ax.set_title(title, fontsize=12, fontweight="bold", color=_CLR_PRIMARY, pad=6)
-
-    for r in range(3):
-        for c in range(3):
-            val = matrix[r][c]
-            bg = _CLR_TILE_ZERO if val == 0 else _CLR_TILE_BG
-            rect = patches_mod.FancyBboxPatch(
-                (c + 0.04, 2.04 - r), 0.92, 0.92,
-                boxstyle="round,pad=0.06",
-                facecolor=bg, edgecolor=_CLR_PRIMARY, linewidth=1.5,
-            )
-            ax.add_patch(rect)
-            txt = "" if val == 0 else str(val)
-            ax.text(
-                c + 0.5, 2.5 - r, txt,
-                ha="center", va="center",
-                fontsize=fontsize, fontweight="bold",
-                color=_CLR_PRIMARY, family="monospace",
-            )
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-#  Backward-compatible single-algorithm entry point
-# ═══════════════════════════════════════════════════════════════════════════════
-
-def save_search_report(
-    *,
-    explored: set[board_state],
-    start_state: board_state,
-    goal_state: board_state | None,
-    time_taken: float,
-    out_file: str = "report.pdf",
-    algorithm: str = "",
-    heuristic: str | None = None,
-    data_structure: str = "",
-    assumptions: list[str] | None = None,
-    extra_work: list[str] | None = None,
-) -> None:
-    """Save a single-algorithm report (wraps generate_full_report)."""
-    from algorithms.algorithms import algorithms as _alg
-
-    res = _alg.result(
-        explored=explored,
-        start_state=start_state,
-        goal_state=goal_state,
-        time_taken=time_taken,
-        max_depth=_search_depth(explored),
-        algorithm=algorithm,
-        heuristic=heuristic,
-        data_structure=data_structure,
-        assumptions=assumptions,
-        extra_work=extra_work,
-    )
-    generate_full_report(
-        results={algorithm or "single": res},
-        start_board=start_state.board,
-        out_file=out_file,
-    )
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-#  Multi-algorithm combined report  (main public API)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-def generate_full_report(
-    *,
-    results: dict[str, object],        # key = label, value = algorithms.result
-    start_board: board_8_puzzle,
-    out_file: str = "report.pdf",
-    assumptions: list[str] | None = None,
-    extra_work: list[str] | None = None,
-) -> None:
-    """Generate a polished multi-algorithm PDF (or .txt fallback).
-
-    Deletes *out_file* first so each run starts fresh.
-    """
-    if os.path.isfile(out_file):
-        os.remove(out_file)
-
-    final_assumptions = assumptions or [
-        "The board is a standard 3\u00d73 8-puzzle with exactly one blank tile (0).",
-        "The goal state is the canonical ordering: 0 1 2 / 3 4 5 / 6 7 8.",
-        "If the initial state is unsolvable (wrong parity), no algorithm will find a path.",
-        "Shuffle-based sample runs always generate solvable instances (random moves from goal).",
-        "A state-expansion limit (LIMIT_STATES) prevents runaway execution for DFS/BFS.",
-    ]
-    final_extras = extra_work or [
-        "Traceable step-by-step path with directional move labels (U / D / L / R).",
-        "Interactive tkinter GUI with algorithm picker, speed slider, and live statistics.",
-        "Per-algorithm search-tree PNG visualization stored in output/<algorithm>/.",
-        "Combined PDF report with cover page, comparison table, and per-algorithm details.",
-    ]
-
-    if out_file.lower().endswith(".pdf"):
-        _generate_pdf(results, start_board, out_file, final_assumptions, final_extras)
-        print(f"\u2713 PDF report saved to: {out_file}")
-    elif out_file.lower().endswith(".txt"):
-        _generate_txt(results, start_board, out_file, final_assumptions, final_extras)
-        print(f"\u2713 Text report saved to: {out_file}")
-    else:
-        print(_build_txt(results, start_board, final_assumptions, final_extras))
-
-
-# ─── Text fallback ────────────────────────────────────────────────────────────
-
 def _build_txt(results, start_board, assumptions, extras) -> str:
     lines: list[str] = []
     lines.append("=" * 70)
@@ -313,7 +294,7 @@ def _build_txt(results, start_board, assumptions, extras) -> str:
         lines.append(f"  Solved:          {'Yes' if solved else 'No'}")
         lines.append(f"  Expanded nodes:  {len(res.explored)}")
         lines.append(f"  Cost of path:    {cost}")
-        lines.append(f"  Search depth:    {_search_depth(res.explored)}")
+        lines.append(f"  Search depth:    {res.max_depth}")
         lines.append(f"  Running time:    {res.time_taken:.4f} sec")
         lines.append(f"  Data structure:  {res.data_structure or info['data_structure']}")
         lines.append("")
@@ -354,8 +335,6 @@ def _generate_txt(results, start_board, out_file, assumptions, extras) -> None:
         f.write(_build_txt(results, start_board, assumptions, extras))
 
 
-# ─── PDF generation ───────────────────────────────────────────────────────────
-
 def _generate_pdf(results, start_board, out_file, assumptions, extras) -> None:
     try:
         plt = importlib.import_module("matplotlib.pyplot")
@@ -374,7 +353,7 @@ def _generate_pdf(results, start_board, out_file, assumptions, extras) -> None:
     W, H = 8.27, 11.69  # A4
 
     with PdfPages(out_file) as pdf:
-        # ── PAGE 1: COVER ─────────────────────────────────────────────────
+        # PAGE 1: COVER 
         fig = plt.figure(figsize=(W, H), facecolor="white")
 
         fig.text(
@@ -415,7 +394,7 @@ def _generate_pdf(results, start_board, out_file, assumptions, extras) -> None:
         )
         pdf.savefig(fig); plt.close(fig)
 
-        # ── PAGE 2: COMPARISON TABLE ──────────────────────────────────────
+        # PAGE 2: COMPARISON TABLE
         fig = plt.figure(figsize=(W, H), facecolor="white")
         fig.text(
             0.5, 0.94, "Algorithm Comparison",
@@ -433,7 +412,7 @@ def _generate_pdf(results, start_board, out_file, assumptions, extras) -> None:
                 "\u2713" if solved else "\u2717",
                 str(len(res.explored)),
                 str(cost),
-                str(_search_depth(res.explored)),
+                str(res.max_depth),
                 f"{res.time_taken:.4f}",
             ])
 
@@ -481,69 +460,7 @@ def _generate_pdf(results, start_board, out_file, assumptions, extras) -> None:
 
         pdf.savefig(fig); plt.close(fig)
 
-        # ── PAGE 3: A* HEURISTIC COMPARISON (optional) ───────────────────
-        man, euc = _find_astar_heuristic_results(results)
-        if man is not None and euc is not None:
-            fig = plt.figure(figsize=(W, H), facecolor="white")
-            fig.text(
-                0.5, 0.94, "A* Heuristic Comparison",
-                ha="center", fontsize=22, fontweight="bold", color=_CLR_PRIMARY,
-            )
-            fig.text(
-                0.5, 0.905, "Manhattan vs Euclidean",
-                ha="center", fontsize=12, color="#546e7a",
-            )
-            line_ax = fig.add_axes([0.1, 0.892, 0.8, 0.004])
-            line_ax.axhline(0.5, color=_CLR_ACCENT, linewidth=2)
-            line_ax.axis("off")
-
-            def _expanded(r) -> int:
-                return len(getattr(r, "explored", []))
-
-            def _cost(r):
-                goal = getattr(r, "goal_state", None)
-                return goal.level if goal else "N/A"
-
-            def _time(r) -> float:
-                return float(getattr(r, "time_taken", 0.0) or 0.0)
-
-            def _moves(r) -> str:
-                goal = getattr(r, "goal_state", None)
-                if not goal:
-                    return "N/A"
-                return _format_moves(goal.get_path())
-
-            man_stats = [
-                "Manhattan",
-                f"Expanded nodes:  {_expanded(man)}",
-                f"Cost of path:    {_cost(man)}",
-                f"Running time:    {_time(man):.4f} sec",
-                f"Moves:           {_moves(man)}",
-            ]
-            euc_stats = [
-                "Euclidean",
-                f"Expanded nodes:  {_expanded(euc)}",
-                f"Cost of path:    {_cost(euc)}",
-                f"Running time:    {_time(euc):.4f} sec",
-                f"Moves:           {_moves(euc)}",
-            ]
-
-            fig.text(0.08, 0.84, "\n".join(man_stats), fontsize=11, family="monospace", va="top", color="#212121")
-            fig.text(0.08, 0.66, "\n".join(euc_stats), fontsize=11, family="monospace", va="top", color="#212121")
-
-            explanation = (
-                "Admissibility (A*): A heuristic is admissible if it never overestimates the true remaining cost. "
-                "For the 8-puzzle with unit step costs, both Manhattan and Euclidean (computed as the sum of per-tile "
-                "distances to goal positions, ignoring the blank) are admissible.\n\n"
-                "Which is 'more admissible'? Admissibility is a yes/no property, so both are admissible. "
-                "But Manhattan is more informed because for every tile: L1 distance \u2265 L2 distance. Therefore h_Manhattan(n) \u2265 h_Euclidean(n) "
-                "for all states n (dominance), so A* with Manhattan typically expands fewer nodes than with Euclidean while still returning an optimal path."
-            )
-            fig.text(0.08, 0.54, "Conclusion:", fontsize=12, fontweight="bold", color=_CLR_PRIMARY, va="top")
-            fig.text(0.08, 0.515, explanation, fontsize=10, color="#37474f", va="top", wrap=True)
-            pdf.savefig(fig); plt.close(fig)
-
-        # ── PER-ALGORITHM DETAIL PAGES ────────────────────────────────────
+        # PER-ALGORITHM DETAIL PAGES
         move_map = {"up": "U", "down": "D", "left": "L", "right": "R"}
 
         for res in results.values():
@@ -572,7 +489,7 @@ def _generate_pdf(results, start_board, out_file, assumptions, extras) -> None:
                 f"Status:          {status_txt}",
                 f"Expanded nodes:  {len(res.explored)}",
                 f"Cost of path:    {cost}",
-                f"Search depth:    {_search_depth(res.explored)}",
+                f"Search depth:    {res.max_depth}",
                 f"Running time:    {res.time_taken:.4f} sec",
                 "",
                 f"Data structure:  {ds}",
@@ -632,7 +549,7 @@ def _generate_pdf(results, start_board, out_file, assumptions, extras) -> None:
                 if len(path) > 8:
                     _render_full_path_pages(pdf, plt, patches_mod, path, info["full_name"])
 
-        # ── CLOSING PAGE: ASSUMPTIONS & EXTRA WORK ────────────────────────
+        # CLOSING PAGE: ASSUMPTIONS & EXTRA WORK
         fig = plt.figure(figsize=(W, H), facecolor="white")
         fig.text(
             0.5, 0.92, "Assumptions & Extra Work",

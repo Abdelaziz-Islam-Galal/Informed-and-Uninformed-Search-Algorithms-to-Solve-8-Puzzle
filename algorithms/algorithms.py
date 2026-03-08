@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import os
+import shutil
+import stat
 
 from algorithms.data_structures import queue, stack, priority_queue
 from board import board_8_puzzle
@@ -10,7 +12,7 @@ from time import time
 from visualizer.tree_drawer import tree_drawer as _tree_drawer
 
 class algorithms:
-    LIMIT_STATES = 10000000
+    LIMIT_STATES = 1000000
     
     def __init__(self, puzzle: board_8_puzzle):
         self._puzzle = puzzle
@@ -23,7 +25,7 @@ class algorithms:
         time_taken: float
         max_depth: int
 
-        # Metadata for reporting (kept optional for backward compatibility)
+        # data for reporting (kept optional for backward compatibility)
         algorithm: str = ""
         heuristic: str | None = None
         data_structure: str = ""
@@ -38,6 +40,7 @@ class algorithms:
                 start_state=self.start_state,
                 goal_state=self.goal_state,
                 time_taken=self.time_taken,
+                max_depth=self.max_depth,
                 out_file=out_file,
                 algorithm=self.algorithm,
                 heuristic=self.heuristic,
@@ -48,10 +51,22 @@ class algorithms:
         def __str__(self):
             return f"Algorithm: {self.algorithm}\nHeuristic: {self.heuristic}\nData Structure: {self.data_structure}\nAssumptions: {self.assumptions}\nExtra Work: {self.extra_work}\nTime Taken: {self.time_taken:.4f} sec\nExplored Nodes: {len(self.explored)}\nStart State:\n{self.start_state.board}\nGoal State:\n{self.goal_state.board if self.goal_state else 'N/A'}"
 
+    def _clear_output_dir(self, output_root: str = "output") -> None:
+        def _onerror(func, path, exc_info):
+            try:
+                os.chmod(path, stat.S_IWRITE)
+                func(path)
+            except Exception:
+                raise
+
+        if os.path.isdir(output_root):
+            shutil.rmtree(output_root, onerror=_onerror)
+        os.makedirs(output_root, exist_ok=True)
 
     def bfs(self, visual_output: bool, output_dir: str = "output") -> algorithms.result:
         if visual_output:
             os.makedirs(output_dir, exist_ok=True)  # ensure output_dir exists
+            self._clear_output_dir(output_dir)
             visualizer_input_list: list[tuple[set, set, str, str]] = []
 
         max_depth = 0
@@ -127,6 +142,7 @@ class algorithms:
     def ids(self, visual_output: bool, output_dir: str = "output") -> algorithms.result:
         if visual_output:
             os.makedirs(output_dir, exist_ok=True)
+            self._clear_output_dir(output_dir)
             visualizer_input_list: list[tuple[set, set, str, str]] = []
             counter = 0
 
@@ -216,6 +232,7 @@ class algorithms:
     def dfs(self, visual_output: bool, output_dir: str = "output") -> algorithms.result:
         if visual_output:
             os.makedirs(output_dir, exist_ok=True)  # ensure output_dir exists before writing PNGs
+            self._clear_output_dir(output_dir)
             visualizer_input_list: list[tuple[set, set, str, str]] = []
             counter = 0
 
@@ -288,6 +305,7 @@ class algorithms:
     def A_star(self, visual_output: bool, heuristic: str = "manhattan", output_dir: str = "output") -> algorithms.result:
         if visual_output:
             os.makedirs(output_dir, exist_ok=True)
+            self._clear_output_dir(output_dir)
             visualizer_input_list: list[tuple[set, set, str, str]] = []
             counter = 0
 
