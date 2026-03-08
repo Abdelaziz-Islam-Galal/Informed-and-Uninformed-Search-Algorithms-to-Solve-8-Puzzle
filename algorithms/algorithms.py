@@ -305,7 +305,6 @@ class algorithms:
         explored: set[board_state] = set()
         frontier = priority_queue()
         frontier_view: set[board_state] = set()
-        best_g: dict[board_state, int] = {start: start.cost}
         max_depth = 0
         limit_counter = 0
 
@@ -325,10 +324,6 @@ class algorithms:
         while not frontier.is_empty():
             state: board_state = frontier.pop()
             frontier_view.discard(state)
-
-            best_known = best_g.get(state)
-            if best_known is None or state.cost != best_known:#ADD MORE SECURITY TO CHECK THERE IS ONE NODE WITH OPTIMAL COST FOUND
-                continue
 
             explored.add(state)
             max_depth = max(max_depth, state.level)
@@ -354,21 +349,23 @@ class algorithms:
                     time_taken,
                     algorithm="A*",
                     heuristic=heuristic_label,
-                    data_structure="Priority queue (min-heap via heapq) ordered by f=g+h + best_g dictionary",
+                    data_structure="Priority queue (min-heap via heapq) ordered by f=g+h with decrease-key (heapify) on better paths",
                     max_depth=max_depth,
                 )
 
             if limit_counter >= self.LIMIT_STATES:
                 print(f"Reached state limit of {self.LIMIT_STATES}. Terminating search.")
-                return self.result(explored, start, None, time() - start_time, max_depth, algorithm="A*", heuristic=heuristic_label, data_structure="Priority queue (min-heap via heapq) ordered by f=g+h + best_g dictionary")
+                return self.result(explored, start, None, time() - start_time, max_depth, algorithm="A*", heuristic=heuristic_label, data_structure="Priority queue (min-heap via heapq) ordered by f=g+h with decrease-key (heapify) on better paths")
 
             for neighbor in state.neighbors:
-                tentative_g = neighbor.cost
-                prev_best = best_g.get(neighbor)
-                if prev_best is None or tentative_g < prev_best:#node=NONE MEAN THAT WE DIDN'T ADD IT TO best_g YET SO IT DIDN'T HAVE VALUE
-                    best_g[neighbor] = tentative_g              #tentative_g < prev_best CHECK THAT WE WILL ADD THE OPTIMAL COST OF THE NODE 
-                    frontier.insert(neighbor)   #THE SORTING TECHNIC HER DEPEND ON __lt__ which depend on f=g+h in state.py 
+                if neighbor in explored:
+                    continue
+                if neighbor not in frontier_view:
+                    frontier.insert(neighbor)   # heap order uses __lt__ based on f=g+h in state.py
                     frontier_view.add(neighbor)
+                else:
+                    # If this is a better path to an existing frontier node, update it.
+                    frontier.decrease_key(neighbor)
 
             if visual_output:
                 visualizer_input_list.append( # type: ignore
