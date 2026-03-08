@@ -23,20 +23,10 @@ class tree_data:
     def root_node(self, root_node:tree_data_node):
         self._root_node = root_node
 
-    def add_node(self, id, state:list, level:int, parent_id, heuristic=None, move: str | None = None, colour=None):
-        move_map = {"up": "U", "down": "D", "left": "L", "right": "R"}
-        move_label = move_map.get(move, move) if move else ""
-
-        label_parts: list[str] = []
-        if move_label:
-            label_parts.append(str(move_label))
+    def add_node(self, id, state:list, level:int, parent_id, heuristic, colour=None):
+        label = ""
         if heuristic is not None:
-            try:
-                label_parts.append(f"{float(heuristic):.1f}")
-            except (TypeError, ValueError):
-                label_parts.append(str(heuristic))
-
-        label = "\n".join(label_parts)
+            label = f"{heuristic}"
 
         node = tree_data_node(id, state, level, parent_id, label, heuristic, "black" if colour is None else colour)
         self.nodes.append(node)
@@ -57,9 +47,9 @@ class state_to_tree_adapter(tree_data):
                 parent_id = None
                 self.root_node = tree_data_node(state_id, state.board_list, state.level, parent_id, "", state.cost_f)
             if final_state and (state in red_path): #type: ignore
-                self.add_node(state_id, state.board_list, state.level, parent_id, heuristic=state.cost_f, move=getattr(state, "move", None), colour="red")
+                self.add_node(state_id, state.board_list, state.level, parent_id, heuristic=state.cost_f, colour="red")
             else:
-                self.add_node(state_id, state.board_list, state.level, parent_id, heuristic=state.cost_f, move=getattr(state, "move", None))
+                self.add_node(state_id, state.board_list, state.level, parent_id, heuristic=state.cost_f)
         for state in frontier:
             state_id = hash(state)
             if state.parent:
