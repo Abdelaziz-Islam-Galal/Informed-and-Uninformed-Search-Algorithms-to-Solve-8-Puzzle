@@ -14,153 +14,136 @@ def _save_report(result: algorithms.result, out_file: str) -> None:
             print(f"Falling back to text report: {fallback}")
             result.save_report(fallback)
 
-def test_bfs():
-    board = board_8_puzzle([[1,2,5], [3,4,0], [6,7,8]])
-    # board.shuffle(50)
-    print(board)
-    solver = algorithms(board)
+import random
+import os
+import shutil
 
-    result: algorithms.result|None = solver.bfs(False)
-    if result:
-        _save_report(result, "bfs_report.pdf")
 
-def test_visuals():
-    board = board_8_puzzle([[1,2,5], [3,4,0], [6,7,8]])
-    solver = algorithms(board)
-    result: algorithms.result|None = solver.bfs(True)
-    if result:
-        _save_report(result, "output/report.pdf")
+SUBMISSION_INITIAL = [[1, 2, 5], [3, 4, 0], [6, 7, 8]]
 
-def test_a_star(visual: bool = False):
-    board = board_8_puzzle([[1, 2, 5], [3, 4, 0], [6, 7, 8]])
-    solver = algorithms(board)
-    result: algorithms.result|None = solver.A_star(visual, heuristic="manhattan")
-    if result:
-        _save_report(result, "report.pdf")
 
-def compare_a_star_heuristics():
-    board = board_8_puzzle([[1, 2, 5], [3, 4, 0], [6, 7, 8]])
-    solver = algorithms(board)
+def _moves_string(result: algorithms.result) -> str:
+    if not result.goal_state:
+        return "N/A"
+    path = result.goal_state.get_path()
+    move_map = {"up": "U", "down": "D", "left": "L", "right": "R"}
+    moves = [move_map.get(s.move, s.move) for s in path[1:]]
+    return " ".join(m for m in moves if m)
 
-    man = solver.A_star(False, heuristic="manhattan")
-    euc = solver.A_star(False, heuristic="euclidean")
 
-    def moves_string(result: algorithms.result) -> str:
-        if not result.goal_state:
-            return "N/A"
-        path = result.goal_state.get_path()
-        move_map = {"up": "U", "down": "D", "left": "L", "right": "R"}
-        moves = [move_map.get(s.move, s.move) for s in path[1:]]
-        return " ".join(m for m in moves if m)
+def _search_depth(result: algorithms.result) -> int:
+    return max((state.level for state in result.explored), default=0)
 
-    print("A* Heuristic Comparison")
+
+def _print_result(name: str, result: algorithms.result) -> None:
+    print(f"{name}:")
+    print(f"  Solved: {result.goal_state is not None}")
+    print(f"  Expanded nodes: {len(result.explored)}")
+    print(f"  Cost of path: {result.goal_state.level if result.goal_state else 'N/A'}")
+    print(f"  Search depth: {_search_depth(result)}")
+    print(f"  Moves (U/D/L/R): {_moves_string(result)}")
+    print(f"  Time: {result.time_taken:.4f} sec")
+
+
+def run_bfs(board: board_8_puzzle) -> algorithms.result:
+    result = algorithms(board.copy()).bfs(False)
+    _print_result("BFS", result)
+    return result
+
+
+def run_dfs(board: board_8_puzzle) -> algorithms.result:
+    result = algorithms(board.copy()).dfs(False)
+    _print_result("DFS", result)
+    return result
+
+
+def run_ids(board: board_8_puzzle) -> algorithms.result:
+    result = algorithms(board.copy()).ids(False)
+    _print_result("IDS", result)
+    return result
+
+
+def run_a_star_manhattan(board: board_8_puzzle) -> algorithms.result:
+    result = algorithms(board.copy()).A_star(False, heuristic="manhattan")
+    _print_result("A* (Manhattan)", result)
+    return result
+
+
+def run_a_star_euclidean(board: board_8_puzzle) -> algorithms.result:
+    result = algorithms(board.copy()).A_star(False, heuristic="euclidean")
+    _print_result("A* (Euclidean)", result)
+    return result
+
+
+def run_submission_case() -> None:
+    board = board_8_puzzle([row.copy() for row in SUBMISSION_INITIAL])
+    print("CASE 1: SUBMISSION (fixed)")
     print("Start board:")
     print(board)
-    print("- Manhattan:")
-    print(f"  Expanded nodes: {len(man.explored)}")
-    print(f"  Cost of path: {man.goal_state.level if man.goal_state else 'N/A'}")
-    print(f"  Moves: {moves_string(man)}")
-    print(f"  Time: {man.time_taken:.4f} sec")
-    print("- Euclidean:")
-    print(f"  Expanded nodes: {len(euc.explored)}")
-    print(f"  Cost of path: {euc.goal_state.level if euc.goal_state else 'N/A'}")
-    print(f"  Moves: {moves_string(euc)}")
-    print(f"  Time: {euc.time_taken:.4f} sec")
-
-    if man.goal_state and euc.goal_state:
-        if len(man.explored) < len(euc.explored):
-            print("Result: Manhattan expanded fewer nodes on this puzzle.")
-        elif len(man.explored) > len(euc.explored):
-            print("Result: Euclidean expanded fewer nodes on this puzzle.")
-        else:
-            print("Result: Both expanded the same number of nodes on this puzzle.")
-
-    print("Note: For the 8-puzzle, both Manhattan and Euclidean are admissible heuristics.")
-    print("(On very easy boards, they can expand the same number of nodes.)")
+    print("-" * 60)
+    run_bfs(board)
+    run_dfs(board)
+    run_ids(board)
+    run_a_star_manhattan(board)
+    run_a_star_euclidean(board)
 
 
-def compare_a_star_heuristics_shuffled(shuffle_moves: int = 25, seed: int = 0):
-    """Compare heuristics on a harder, reproducible shuffled board."""
+def run_random_case(*, shuffle_moves: int = 25, seed: int = 0) -> None:
     random.seed(seed)
-    base = board_8_puzzle()  # starts at goal
-    base.shuffle(shuffle_moves)
+    board = board_8_puzzle()
+    board.shuffle(shuffle_moves)
 
-    start_matrix = [row.copy() for row in base.board]
-    man_board = board_8_puzzle([row.copy() for row in start_matrix])
-    euc_board = board_8_puzzle([row.copy() for row in start_matrix])
-
-    man = algorithms(man_board).A_star(False, heuristic="manhattan")
-    euc = algorithms(euc_board).A_star(False, heuristic="euclidean")
-
-    def moves_string(result: algorithms.result) -> str:
-        if not result.goal_state:
-            return "N/A"
-        path = result.goal_state.get_path()
-        move_map = {"up": "U", "down": "D", "left": "L", "right": "R"}
-        moves = [move_map.get(s.move, s.move) for s in path[1:]]
-        return " ".join(m for m in moves if m)
-
-    print("A* Heuristic Comparison (Shuffled)")
+    print("CASE 2: RANDOM (shuffled)")
     print(f"Shuffle moves: {shuffle_moves}, seed: {seed}")
     print("Start board:")
-    print(man_board)
-    print("- Manhattan:")
-    print(f"  Expanded nodes: {len(man.explored)}")
-    print(f"  Cost of path: {man.goal_state.level if man.goal_state else 'N/A'}")
-    print(f"  Moves: {moves_string(man)}")
-    print(f"  Time: {man.time_taken:.4f} sec")
-    print("- Euclidean:")
-    print(f"  Expanded nodes: {len(euc.explored)}")
-    print(f"  Cost of path: {euc.goal_state.level if euc.goal_state else 'N/A'}")
-    print(f"  Moves: {moves_string(euc)}")
-    print(f"  Time: {euc.time_taken:.4f} sec")
-
-    if man.goal_state and euc.goal_state:
-        if len(man.explored) < len(euc.explored):
-            print("Result: Manhattan expanded fewer nodes on this puzzle.")
-        elif len(man.explored) > len(euc.explored):
-            print("Result: Euclidean expanded fewer nodes on this puzzle.")
-        else:
-            print("Result: Both expanded the same number of nodes on this puzzle.")
-
-    print("Note: Both heuristics are admissible; Manhattan is usually more informed.")
+    print(board)
+    print("-" * 60)
+    # On harder boards BFS/DFS/IDS can be very slow, so default to A* only.
+    run_a_star_manhattan(board)
+    run_a_star_euclidean(board)
 
 
-def compare_a_star_heuristics_with_visuals(shuffle_moves: int = 10, seed: int = 0):
-    random.seed(seed)
-    base = board_8_puzzle()
-    base.shuffle(shuffle_moves)
+def run_submission_visualization(*, output_root: str = "output", include_dfs: bool = False) -> None:
+    """Generate visualization PNGs for the submission case only.
 
-    start_matrix = [row.copy() for row in base.board]
-    man_board = board_8_puzzle([row.copy() for row in start_matrix])
-    euc_board = board_8_puzzle([row.copy() for row in start_matrix])
+    Requirements implemented:
+    - Clear output_root every time before generating.
+    - Put each model's PNGs under output_root/<model_name>/
+    - Do NOT visualize the random case.
+    """
 
-    root_dir = os.path.join("output", f"shuffled_{shuffle_moves}_seed{seed}")
-    man_dir = os.path.join(root_dir, "manhattan")
-    euc_dir = os.path.join(root_dir, "euclidean")
+    # Requirement: each run should replace the previous run output entirely.
+    if os.path.isdir(output_root):
+        shutil.rmtree(output_root)  # delete old PNGs/folders
+    os.makedirs(output_root, exist_ok=True)
 
-    print("Visual start board:")
-    print(man_board)
+    board = board_8_puzzle([row.copy() for row in SUBMISSION_INITIAL])
+
+    # Requirement: each model gets its own folder under output/.
+    bfs_dir = os.path.join(output_root, "bfs")
+    dfs_dir = os.path.join(output_root, "dfs")
+    ids_dir = os.path.join(output_root, "ids")
+    a_man_dir = os.path.join(output_root, "a_star_manhattan")
+    a_euc_dir = os.path.join(output_root, "a_star_euclidean")
+
+    os.makedirs(dfs_dir, exist_ok=True)  # created even if DFS visuals are skipped
+    os.makedirs(ids_dir, exist_ok=True)  # IDS currently has no PNG visualization output.
+
     try:
-        print(f"Generating visuals for Manhattan in: {man_dir}")
-        algorithms(man_board).A_star(True, heuristic="manhattan", output_dir=man_dir)
-        print(f"Generating visuals for Euclidean in: {euc_dir}")
-        algorithms(euc_board).A_star(True, heuristic="euclidean", output_dir=euc_dir)
+        algorithms(board.copy()).bfs(True, output_dir=bfs_dir)
+
+        # DFS can expand a huge number of nodes before it finds the (short) solution,
+        # which would generate a massive number of PNGs and make the run very slow.
+        if include_dfs:
+            algorithms(board.copy()).dfs(True, output_dir=dfs_dir)
+        algorithms(board.copy()).A_star(True, heuristic="manhattan", output_dir=a_man_dir)
+        algorithms(board.copy()).A_star(True, heuristic="euclidean", output_dir=a_euc_dir)
     except ModuleNotFoundError as exc:
         print(str(exc))
-        print("(Visualizer requires matplotlib in your venv.)")
+        print("(Visualizer requires matplotlib in your active environment.)")
+
 
 if __name__ == "__main__":
-    print("Running 8-puzzle tests...")
-    print("=" * 60)
-    compare_a_star_heuristics()
-    print("=" * 60)
-    compare_a_star_heuristics_shuffled(shuffle_moves=25, seed=0)
-    print("=" * 60)
-    # Uncomment if you want PNG tree visuals (requires matplotlib)
-    # compare_a_star_heuristics_with_visuals(shuffle_moves=10, seed=0)
-    print("=" * 60)
-    test_a_star(visual=False)
-    print("=" * 60)
-    test_bfs()
-    print("Done.")
+    run_submission_case()
+    run_submission_visualization(output_root="output")
+    run_random_case(shuffle_moves=25, seed=0)

@@ -44,15 +44,11 @@ class algorithms:
             )
 
 
-    def bfs(self, visual_output:bool) -> algorithms.result:
-        """Breadth-First Search (BFS).
-
-        Uses:
-        - Frontier: FIFO queue
-        - Visited/explored: set (hashing) to avoid revisiting states
-        """
+    def bfs(self, visual_output: bool, output_dir: str = "output") -> algorithms.result:
+        # output_dir added so visualization PNGs can be routed to a model-specific folder
+        # (e.g., output/bfs/) instead of always writing into the shared output/ directory.
         if visual_output:
-            os.makedirs("output", exist_ok=True)
+            os.makedirs(output_dir, exist_ok=True)  # ensure output_dir exists before writing PNGs
             visualizer_input_list: list[tuple[set, set, str, str]] = []
 
         start_time = time()
@@ -66,7 +62,14 @@ class algorithms:
         search_frontier.add(start)
         if visual_output:
             counter = 0
-            visualizer_input_list.append((explored.copy(), search_frontier.copy(), f"step {counter} (start)", f"output/{counter}.png")) # type: ignore
+            visualizer_input_list.append(
+                (
+                    explored.copy(),
+                    search_frontier.copy(),
+                    f"step {counter} (start)",
+                    os.path.join(output_dir, f"{counter}.png"),  # write under output_dir
+                )
+            )  # type: ignore
             counter+=1
 
         while not frontier.is_empty():
@@ -81,7 +84,13 @@ class algorithms:
                     drawer = _tree_drawer()
                     for input in visualizer_input_list: # type: ignore
                         drawer.draw(input[0], input[1], None, title=input[2], out_file=input[3]) # type: ignore
-                    drawer.draw(explored.copy(), search_frontier.copy(), state, f"step {counter} (start)", f"output/{counter}.png") # type: ignore
+                    drawer.draw(
+                        explored.copy(),
+                        search_frontier.copy(),
+                        state,
+                        f"step {counter} (goal)",
+                        os.path.join(output_dir, f"{counter}.png"),  # write under output_dir
+                    )  # type: ignore
                 
                 return self.result(
                     explored,
@@ -99,21 +108,18 @@ class algorithms:
                     search_frontier.add(neighbor)
 
             if visual_output:
-                visualizer_input_list.append((explored.copy(), search_frontier.copy(), f"step {counter}", f"output/{counter}.png")) #type: ignore
+                visualizer_input_list.append(
+                    (
+                        explored.copy(),
+                        search_frontier.copy(),
+                        f"step {counter}",
+                        os.path.join(output_dir, f"{counter}.png"),  # write under output_dir
+                    )
+                )  #type: ignore
                 counter += 1 # type: ignore
 
 
-        return self.result(
-            explored,
-            start,
-            None,
-            time() - start_time,
-            algorithm="BFS",
-            heuristic=None,
-            data_structure="Queue (FIFO) using collections.deque + explored/frontier sets",
-        )
-
-    def ids(self, visual_output: bool = False) -> algorithms.result:
+    def ids(self, visual_output: bool) -> algorithms.result:
         start_time = time()
         start_node = board_state(self._puzzle, None)
         
@@ -164,14 +170,16 @@ class algorithms:
                 
         # Return failure if the limit is exceeded without finding a goal
         return self.result(all_explored, start_node, None, time() - start_time)
-    def dfs(self, visual_output: bool) -> algorithms.result:
+    def dfs(self, visual_output: bool, output_dir: str = "output") -> algorithms.result:
+        # output_dir added so visualization PNGs can be routed to a model-specific folder
+        # (e.g., output/dfs/) instead of always writing into the shared output/ directory.
         if visual_output:
-            os.makedirs("output", exist_ok=True)
+            os.makedirs(output_dir, exist_ok=True)  # ensure output_dir exists before writing PNGs
             visualizer_input_list: list[tuple[set, set, str, str]] = []
             counter = 0
 
         start_time = time()
-        start = board_state(self._puzzle, None, False)
+        start = board_state(self._puzzle, None)
         
         explored = set()
         frontier = stack() 
@@ -181,7 +189,14 @@ class algorithms:
         search_frontier.add(start)
 
         if visual_output:
-            visualizer_input_list.append((explored.copy(), search_frontier.copy(), f"step {counter} (start)", f"output/{counter}.png")) # type: ignore
+            visualizer_input_list.append(
+                (
+                    explored.copy(),
+                    search_frontier.copy(),
+                    f"step {counter} (start)",
+                    os.path.join(output_dir, f"{counter}.png"),  # write under output_dir
+                )
+            )  # type: ignore
             counter += 1
 
         while not frontier.is_empty():
@@ -197,7 +212,13 @@ class algorithms:
                     drawer = _tree_drawer()
                     for input_data in visualizer_input_list:
                         drawer.draw(input_data[0], input_data[1], None, title=input_data[2], out_file=input_data[3])
-                    drawer.draw(explored.copy(), search_frontier.copy(), state, f"step {counter} (goal)", f"output/{counter}.png")
+                    drawer.draw(
+                        explored.copy(),
+                        search_frontier.copy(),
+                        state,
+                        f"step {counter} (goal)",
+                        os.path.join(output_dir, f"{counter}.png"),  # write under output_dir
+                    )
                 
                 return self.result(explored, start, state, time_taken)
 
@@ -208,7 +229,14 @@ class algorithms:
                     search_frontier.add(neighbor)
 
             if visual_output:
-                visualizer_input_list.append((explored.copy(), search_frontier.copy(), f"step {counter}", f"output/{counter}.png")) # type: ignore
+                visualizer_input_list.append(
+                    (
+                        explored.copy(),
+                        search_frontier.copy(),
+                        f"step {counter}",
+                        os.path.join(output_dir, f"{counter}.png"),  # write under output_dir
+                    )
+                )  # type: ignore
                 counter += 1
 
         return self.result(explored, start, None, time() - start_time)
@@ -220,12 +248,6 @@ class algorithms:
         heuristic: str = "manhattan",
         output_dir: str = "output",
     ) -> algorithms.result:
-        """A* search.
-
-        Uses:
-        - Frontier: priority queue (min-heap) ordered by f=g+h
-        - best_g dict: tracks best known g-cost per state to skip stale heap entries
-        """
         if visual_output:
             os.makedirs(output_dir, exist_ok=True)
             visualizer_input_list: list[tuple[set, set, str, str]] = []
