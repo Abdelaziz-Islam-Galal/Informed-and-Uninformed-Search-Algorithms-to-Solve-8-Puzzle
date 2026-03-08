@@ -51,16 +51,29 @@ class priority_queue:
             return heapq.heappop(self.items)
         raise IndexError("Pop from an empty priority queue")
     
-    # # NOTE: needs to be revised when implementing A*
-    # def decrease_key(self, item: board_state):
-    #     for index, current_item in enumerate(self.items):
-    #         if current_item == item:
-    #             if item.cost_f < current_item.cost_f:
-    #                 self.items[index].cost_f = item.cost_f
-    #                 self.items[index].parent = item.parent
-    #                 heapq.heapify(self.items)
-    #             return
-    #     raise ValueError("Item not found in the priority queue")
+    def decrease_key(self, item: board_state) -> bool:
+        """Decrease the priority of an existing state in the heap.
+
+        For A* this means updating the stored node if we found a better path (lower g,
+        hence lower f).  Returns True if an update happened, else False.
+        """
+        for current_item in self.items:
+            if current_item == item:
+                # Prefer comparing f when present; otherwise fall back to g.
+                if current_item.cost_f is not None and item.cost_f is not None:
+                    improved = item.cost_f < current_item.cost_f
+                else:
+                    improved = item.cost < current_item.cost
+
+                if improved:
+                    current_item.cost = item.cost
+                    current_item.cost_f = item.cost_f
+                    current_item.parent = item.parent
+                    current_item.move = item.move
+                    heapq.heapify(self.items)
+                    return True
+                return False
+        return False
 
     def is_empty(self):
         return len(self.items) == 0
