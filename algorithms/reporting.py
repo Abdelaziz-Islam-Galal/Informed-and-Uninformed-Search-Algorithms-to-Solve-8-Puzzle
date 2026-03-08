@@ -132,6 +132,30 @@ def _draw_board(ax, matrix: list[list[int]], *, title: str = "", fontsize: int =
                 color=_CLR_PRIMARY, family="monospace",
             )
 
+def _normalize_heuristic_name(name: str | None) -> str | None:
+    if not name:
+        return None
+    norm = name.strip().lower().replace("-", "").replace("_", "").replace(" ", "")
+    if norm in {"manhattan", "manhattandistance"}:
+        return "manhattan"
+    if norm in {"euclidean", "eucledian", "euclideandistance", "euclediandistance"}:
+        return "euclidean"
+    return norm
+
+def _find_astar_heuristic_results(results: dict[str, object]):
+    """Return (manhattan_res, euclidean_res) if present in results; else (None, None)."""
+    man = None
+    euc = None
+    for res in results.values():
+        algo = getattr(res, "algorithm", "")
+        if _algo_key(algo) not in {"A*", "ASTAR"}:
+            continue
+        heur = _normalize_heuristic_name(getattr(res, "heuristic", None))
+        if heur == "manhattan":
+            man = res
+        elif heur == "euclidean":
+            euc = res
+    return man, euc
 
 def save_search_report(
     explored: set[board_state],
@@ -205,6 +229,45 @@ def generate_full_report(
         print(f"\u2713 Text report saved to: {out_file}")
     else:
         print(_build_txt(results, start_board, final_assumptions, final_extras))
+
+def _build_astar_heuristic_comparison_txt(results: dict[str, object]) -> list[str]:
+    man, euc = _find_astar_heuristic_results(results)
+    if man is None or euc is None:
+        return []
+
+    def _expanded(r) -> int:
+        return len(getattr(r, "explored", []))
+
+    def _cost(r):
+        goal = getattr(r, "goal_state", None)
+        return goal.level if goal else "N/A"
+
+    def _moves(r) -> str:
+        goal = getattr(r, "goal_state", None)
+        if not goal:
+            return "N/A"
+        return _format_moves(goal.get_path())
+
+    lines: list[str] = []
+    lines.append("-" * 70)
+    lines.append("  A* HEURISTIC COMPARISON (Manhattan vs Euclidean)")
+    lines.append("-" * 70)
+    lines.append(f"  Expanded nodes:  Manhattan = {_expanded(man)}   |   Euclidean = {_expanded(euc)}")
+    lines.append(f"  Cost of path:    Manhattan = {_cost(man)}   |   Euclidean = {_cost(euc)}")
+    lines.append(f"  Moves (path):    Manhattan = {_moves(man)}")
+    lines.append(f"                 Euclidean = {_moves(euc)}")
+    lines.append("")
+    lines.append(
+        "  Admissibility: Both heuristics are admissible for the 8-puzzle when h(n) is computed as the sum "
+        "of per-tile distances to their goal positions (ignoring the blank)."
+    )
+    lines.append(
+        "  Which is 'more admissible'? Admissibility is a yes/no property, so both are admissible.  "
+        "However, Manhattan dominates Euclidean (for each tile, L1 distance ≥ L2 distance), so it is more "
+        "informed and typically expands fewer nodes while still guaranteeing an optimal solution under A*."
+    )
+    lines.append("")
+    return lines
 
 
 def _build_txt(results, start_board, assumptions, extras) -> str:
