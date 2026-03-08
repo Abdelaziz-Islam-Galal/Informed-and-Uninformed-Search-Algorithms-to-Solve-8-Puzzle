@@ -11,7 +11,6 @@ class board_state:
         self,
         board: board_8_puzzle,
         parent: board_state | None = None,
-        move: str | None = None,
         Manhattan_heuristics: bool = False,
         eucledian_heuristics: bool = False,
         *,
