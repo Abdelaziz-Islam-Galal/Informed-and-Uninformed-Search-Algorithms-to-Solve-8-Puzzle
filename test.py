@@ -144,6 +144,17 @@ def run_submission_visualization(*, output_root: str = "output", include_dfs: bo
 
 
 if __name__ == "__main__":
-    run_submission_case()
-    run_submission_visualization(output_root="output")
-    run_random_case(shuffle_moves=25, seed=0)
+    # run_submission_case()
+    # run_submission_visualization(output_root="output")
+    # run_random_case(shuffle_moves=25, seed=0)
+
+    # board = board_8_puzzle([[3, 1, 2], [6, 4, 5], [0, 7, 8]])
+
+    board = board_8_puzzle([[8, 7, 6], [5, 4, 3], [2, 1, 0]])
+    print(board)
+    solver = algorithms(board)
+    result = solver.bfs(True, output_dir="output/bfs")
+    result = solver.dfs(True, output_dir="output/dfs")
+    result = solver.ids(True, output_dir="output/ids")
+    result = solver.A_star(True, heuristic="manhattan", output_dir="output/a_star_manhattan")
+    result = solver.A_star(True, heuristic="euclidean", output_dir="output/a_star_euclidean")

@@ -14,8 +14,6 @@ class board_state:
         move: str | None = None,
         Manhattan_heuristics: bool = False,
         eucledian_heuristics: bool = False,
-        *,
-        move: str | None = None,
     ):
         self.board = board
         self.parent = parent
