@@ -388,4 +388,4 @@ class algorithms:
                 )  # type: ignore
                 counter += 1 # type: ignore
 
-        return self.result(explored, start, None, time() - start_time, max_depth)
+        return self.result(explored, start, None, time() - start_time, max_depth, algorithm="A*", heuristic=heuristic_label, data_structure="Priority queue (min-heap via heapq) ordered by f=g+h + best_g dictionary")
