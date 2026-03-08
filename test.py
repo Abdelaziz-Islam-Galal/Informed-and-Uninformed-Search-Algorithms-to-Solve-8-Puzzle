@@ -166,6 +166,8 @@ def find_astar_heuristic_difference_example(
 
 
 if __name__ == "__main__":
-    TEST = [[8,7,6], [5,4,3], [2,1,0]]
-    test_puzzle = board_8_puzzle(TEST)
-    generate_report(test_puzzle, out_file="test_report.pdf")
+    # TEST = [[8,7,6], [5,4,3], [2,1,0]]
+    # test_puzzle = board_8_puzzle(TEST)
+    # generate_report(test_puzzle, out_file="test_report.pdf")
+
+    generate_report()
